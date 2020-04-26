@@ -1,0 +1,6 @@
+.card {
+  width: 60px;
+  touch-action: none;
+  user-select: none;
+  position: absolute;
+}
