@@ -1,12 +1,12 @@
 import React from 'react';
 import HiddenSvgCardsComponent from './HiddenSvgCardsComponent';
-import CardTableComponent from './CardTableComponent';
+import CardTableContainer from './CardTableContainer';
 
 function App() {
   return (
     <div>
       <HiddenSvgCardsComponent />
-      <CardTableComponent></CardTableComponent>
+      <CardTableContainer />
     </div>
   );
 }

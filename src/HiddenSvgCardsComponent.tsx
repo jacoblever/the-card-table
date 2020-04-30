@@ -3,7 +3,7 @@ import cards from '../node_modules/svg-cards/svg-cards.svg'
 
 
 class HiddenSvgCardsComponent extends React.Component<{}, {}> {
-  componentWillMount() {
+  componentDidMount() {
     let fetchXML = (url: string, callback: (d: Document) => void) => {
       var xhr = new XMLHttpRequest();
       xhr.open('GET', url, true);
