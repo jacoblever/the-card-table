@@ -1,6 +1,7 @@
 import { Suit } from '../Suit';
 
 export interface Card {
+  id: string;
   faceUp: boolean;
   suit: Suit;
   number: number;

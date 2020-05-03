@@ -9,20 +9,13 @@ import {
 } from "./types";
 import { Suit } from '../Suit';
 
-let uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-      // eslint-disable-next-line
-      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-  });
-};
-
 let getInitalCards: () => CardState = () => {
   let cards: Card[] = []
   let suits = [Suit.Clubs, Suit.Diamonds, Suit.Hearts, Suit.Spades]
   for (let suit of suits) {
     for (let i = 1; i <= 13; i++) {
       cards.push({
+        id: `${suit}-${i}`,
         faceUp: false,
         suit: suit,
         number: i,
@@ -40,7 +33,7 @@ let getInitalCards: () => CardState = () => {
     cardsById: {},
   }
   for (const card of cards) {
-    cardState.cardsById[uuidv4()] = card;
+    cardState.cardsById[card.id] = card;
   }
   return cardState;
 };
