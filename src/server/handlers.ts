@@ -37,9 +37,9 @@ export function handleRemoteEvent(event: MessageEvent, cardsById: { [key: string
       animateMoveCard(cardsById[message.cardId], endLocation, dispatcher)
       break;
     case TURN_OVER_CARD:
-      dispatcher(turnOverCard(message.cardId));
+      dispatcher(turnOverCard(message.cardId, true));
       break;
     default:
       break;
   }
-}
+};

@@ -24,23 +24,27 @@ export const TURN_OVER_CARD = "TURN_OVER_CARD";
 
 export interface PickUpCardAction {
   type: typeof PICK_UP_CARD;
+  remote: boolean;
   cardId: string;
 }
 
 export interface MoveCardAction {
   type: typeof MOVE_CARD;
+  remote: boolean;
   cardId: string;
   location: number[];
 }
 
 export interface DropCardAction {
   type: typeof DROP_CARD;
+  remote: boolean;
   cardId: string;
   location: number[];
 }
 
 export interface TurnOverCardAction {
   type: typeof TURN_OVER_CARD;
+  remote: boolean;
   cardId: string;
 }
 
