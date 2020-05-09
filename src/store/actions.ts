@@ -5,29 +5,29 @@ export const TURN_OVER_CARD = "TURN_OVER_CARD";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
 
-export interface PickUpCardAction {
+interface RemoteAction {
+    remote: boolean;
+}
+
+export interface PickUpCardAction extends RemoteAction {
     type: typeof PICK_UP_CARD;
-    remote: boolean;
     cardId: string;
 }
 
-export interface MoveCardAction {
+export interface MoveCardAction extends RemoteAction {
     type: typeof MOVE_CARD;
-    remote: boolean;
     cardId: string;
     location: number[];
 }
 
-export interface DropCardAction {
+export interface DropCardAction extends RemoteAction {
     type: typeof DROP_CARD;
-    remote: boolean;
     cardId: string;
     location: number[];
 }
 
-export interface TurnOverCardAction {
+export interface TurnOverCardAction extends RemoteAction {
     type: typeof TURN_OVER_CARD;
-    remote: boolean;
     cardId: string;
 }
 
