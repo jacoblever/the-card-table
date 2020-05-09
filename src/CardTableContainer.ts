@@ -1,9 +1,9 @@
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux';
 
-import { AppState, ActionTypes } from "./store/types";
+import { AppState } from "./store/state";
 import CardTableComponent from './CardTableComponent'
-import { wsConnect, wsDisconnect } from './store/actions';
+import { ActionTypes, wsConnect, wsDisconnect } from './store/actions';
 
 const mapStateToProps = (state: AppState, ownProps: {}) => ({
   cards: state.cards.cardsById,

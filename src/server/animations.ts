@@ -1,5 +1,5 @@
-import { ActionTypes, Card } from "../store/types";
-import { moveCard, pickUpCard } from "../store/actions";
+import { Card } from "../store/state";
+import { ActionTypes, moveCard, pickUpCard } from "../store/actions";
 
 export const animateMoveCard = (card: Card, endLocation: number[], dispatch: (action: ActionTypes) => void) => {
   let duration = 200;

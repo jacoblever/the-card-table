@@ -3,8 +3,9 @@ import reduxThunk, { ThunkMiddleware } from 'redux-thunk';
 
 import { CardsReducer } from "./reducers";
 import socketMiddleware from '../server/websocket';
-import { AppState, ActionTypes } from "./types";
+import { AppState } from "./state";
 import { Dispatch } from "react";
+import { ActionTypes } from "./actions";
 
 const rootReducer = combineReducers({
   cards: CardsReducer,

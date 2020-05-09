@@ -2,7 +2,7 @@ import React from 'react';
 
 import './CardTableComponent.css';
 import CardContainer from './CardContainer';
-import { Card } from './store/types';
+import { Card } from './store/state';
 
 type CardTableProps = {
   cards: { [key: string]: Card; }

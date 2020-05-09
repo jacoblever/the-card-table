@@ -1,9 +1,9 @@
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux';
 
-import { pickUpCard, turnOverCard, moveCard, dropCard } from './store/actions'
+import { pickUpCard, turnOverCard, moveCard, dropCard, ActionTypes } from './store/actions'
 
-import { AppState, ActionTypes } from "./store/types";
+import { AppState } from "./store/state";
 import { CardComponent } from './CardComponent'
 
 import Suit from './Suit'

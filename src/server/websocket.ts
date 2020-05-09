@@ -1,7 +1,7 @@
 import { Dispatch, Store } from "redux";
-import { AppState, ActionTypes, WS_CONNECT, WS_DISCONNECT, TURN_OVER_CARD, DROP_CARD } from "../store/types";
+import { AppState } from "../store/state";
 import { animateMoveCard } from "./animations";
-import { turnOverCard } from "../store/actions";
+import { ActionTypes, DROP_CARD, TURN_OVER_CARD, turnOverCard, WS_CONNECT, WS_DISCONNECT } from "../store/actions";
 
 const socketMiddleware = () => {
   let socket: WebSocket | null = null;
