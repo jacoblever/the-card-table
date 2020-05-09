@@ -13,7 +13,7 @@ export const animateMoveCard = (card: Card, endLocation: number[], dispatch: (ac
 
   let animationStep = () => {
     setTimeout(() => {
-      if (stepPercent * stepNumber < 1) {
+      if (stepPercent * stepNumber <= 1) {
         let nextLocation = [0, 1].map(i => {
           return startLocation[i] + stepPercent * stepNumber * (endLocation[i] - startLocation[i]);
         });

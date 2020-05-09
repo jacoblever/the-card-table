@@ -87,11 +87,7 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             this.props.onMove(x, y);
           },
           end: event => {            
-            // alert((Math.sqrt(Math.pow(event.pageX - event.x0, 2) +
-            //     Math.pow(event.pageY - event.y0, 2) | 0))
-            //   .toFixed(2));
-            
-            this.props.onDrop(event.pageX, event.pageY);
+            this.props.onDrop(this.props.location[0], this.props.location[1]);
           }
         }
       });
