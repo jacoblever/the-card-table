@@ -1,4 +1,4 @@
-import { PICK_UP_CARD, MOVE_CARD, DROP_CARD, TURN_OVER_CARD, ActionTypes } from "./types";
+import { PICK_UP_CARD, MOVE_CARD, DROP_CARD, TURN_OVER_CARD, WS_CONNECT, WS_DISCONNECT, ActionTypes } from "./types";
 
 export function pickUpCard(cardId: string): ActionTypes {
   return {
@@ -31,5 +31,17 @@ export function turnOverCard(cardId: string, remote: boolean = false): ActionTyp
     type: TURN_OVER_CARD,
     remote: remote,
     cardId: cardId,
+  };
+}
+
+export function wsConnect(): ActionTypes {
+  return {
+    type: WS_CONNECT,
+  };
+}
+
+export function wsDisconnect(): ActionTypes {
+  return {
+    type: WS_DISCONNECT,
   };
 }
