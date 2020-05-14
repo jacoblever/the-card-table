@@ -1,0 +1,22 @@
+.hand-container {
+    height: 100px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    margin: 2px 0;
+}
+
+.hand {
+    height: 110%;
+    width: 500px;
+    outline: 1px solid black;
+    margin: 0 auto;
+}
+
+.hand.drop-active {
+    outline: 2px dashed #aaa;
+}
+
+.hand.drop-target {
+    outline-style: solid;
+}

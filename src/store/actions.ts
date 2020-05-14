@@ -1,3 +1,5 @@
+import { CardOwner } from "./state";
+
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
 export const DROP_CARD = "DROP_CARD";
@@ -24,6 +26,7 @@ export interface DropCardAction extends RemoteAction {
     type: typeof DROP_CARD;
     cardId: string;
     location: number[];
+    nowHeldBy: CardOwner;
 }
 
 export interface TurnOverCardAction extends RemoteAction {
@@ -63,12 +66,13 @@ export function moveCard(cardId: string, location: number[]): ActionTypes {
   };
 }
 
-export function dropCard(cardId: string, location: number[]): ActionTypes {
+export function dropCard(cardId: string, location: number[], nowHeldBy: CardOwner, remote: boolean = false): ActionTypes {
   return {
     type: DROP_CARD,
-    remote: false,
+    remote: remote,
     cardId: cardId,
     location: location,
+    nowHeldBy: nowHeldBy,
   };
 }
 

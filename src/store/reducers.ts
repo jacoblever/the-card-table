@@ -17,6 +17,7 @@ export function CardsReducer(
           .map(id => state.cardsById[id].zIndex)
       );
       return {
+        ...state,
         cardsById: {
           ...state.cardsById,
           [action.cardId]: Object.assign(
@@ -25,23 +26,38 @@ export function CardsReducer(
             { zIndex: zIndexOfHighestOtherCard + 1 }
           ),
         }
-      }
-
+      };
     case MOVE_CARD:
       return {
+        ...state,
+        cardsById: {
+          ...state.cardsById,
+          [action.cardId]: {
+            ...state.cardsById[action.cardId],
+            location: action.location,
+          },
+        }
+      };
+    case DROP_CARD:
+      return {
+        ...state,
         cardsById: {
           ...state.cardsById,
           [action.cardId]: Object.assign(
-            {},
-            state.cardsById[action.cardId],
-            { location: action.location }
+              {},
+              state.cardsById[action.cardId],
+              { nowHeld: action.location }
           ),
+          [action.cardId]: {
+            ...state.cardsById[action.cardId],
+            heldBy: action.nowHeldBy,
+            location: action.location,
+          },
         }
-      }
-    case DROP_CARD:
-      return state
+      };
     case TURN_OVER_CARD:
       return {
+        ...state,
         cardsById: {
           ...state.cardsById,
           [action.cardId]: Object.assign(
@@ -50,7 +66,7 @@ export function CardsReducer(
             { faceUp: !state.cardsById[action.cardId].faceUp }
           ),
         }
-      }
+      };
     default:
       return state;
   }

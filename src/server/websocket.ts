@@ -16,10 +16,17 @@ const socketMiddleware = () => {
 
   const onMessage = (store: Store<AppState, ActionTypes>) => (event: MessageEvent) => {
     let message = JSON.parse(event.data) as ActionTypes;
+    let currentState = store.getState();
     switch (message.type) {
       case DROP_CARD:
         let endLocation = message.location;
-        animateMoveCard(store.getState().cards.cardsById[message.cardId], endLocation, (a: ActionTypes) => store.dispatch(a))
+        animateMoveCard(
+          currentState.cards.cardsById[message.cardId],
+          endLocation,
+          message.nowHeldBy,
+          currentState.cards.me,
+          (a: ActionTypes) => store.dispatch(a),
+        )
         break;
       case TURN_OVER_CARD:
         store.dispatch(turnOverCard(message.cardId, true));

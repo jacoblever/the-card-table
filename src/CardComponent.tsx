@@ -5,19 +5,22 @@ import '@interactjs/types'
 
 import { Suit } from './Suit';
 import './CardComponent.css';
+import { CardOwner, CardOwnerTable } from "./store/state";
+import { LocationTransformer } from "./geometry/locationTransformer";
 
 export type CardProps = {
   id: string,
   location: number[],
   suit: Suit,
   number: number,
+  heldBy: CardOwner,
   faceUp: boolean,
   zIndex: number,
 
   onClick: () => void,
   onPickUp: () => void,
   onMove: (x: number, y: number) => void,
-  onDrop: (x: number, y: number) => void,
+  onDrop: (location: number[], nowHeldBy: CardOwner) => void,
 }
 
 type CardState = {
@@ -72,7 +75,7 @@ export class CardComponent extends React.Component<CardProps, CardState> {
         inertia: false,
         modifiers: [
           interact.modifiers.restrictRect({
-            restriction: 'parent',
+            restriction: '#card-table',
             endOnly: true
           })
         ],
@@ -86,8 +89,12 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             var y = this.props.location[1] + event.dy
             this.props.onMove(x, y);
           },
-          end: event => {            
-            this.props.onDrop(this.props.location[0], this.props.location[1]);
+          end: event => {
+            let dropzone = event.dropzone?.target;
+            let nowHeldBy = dropzone?.id ?? CardOwnerTable;
+            let transformedLocation = new LocationTransformer([this.props.location[0], this.props.location[1]], this.props.heldBy)
+              .transformTo(nowHeldBy)
+            this.props.onDrop([transformedLocation[0], transformedLocation[1]], nowHeldBy);
           }
         }
       });
