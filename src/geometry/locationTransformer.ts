@@ -1,10 +1,11 @@
-import { CardOwner, CardOwnerTable, Location } from "../store/state";
+import { CardOwner, CardOwnerTable, Coordinates } from "../store/state";
+import { Elementwise } from "./elementwise";
 
 export class LocationTransformer {
-  private readonly _location: Location;
+  private readonly _location: Coordinates;
   private readonly _reference: HTMLElement;
 
-  constructor(location: Location, owner: CardOwner) {
+  constructor(location: Coordinates, owner: CardOwner) {
     this._location = location;
     this._reference = this.getElement(owner);
   }
@@ -17,13 +18,15 @@ export class LocationTransformer {
     }
   }
 
-  public transformTo(newOwner: CardOwner): Location {
-    console.log(this._reference);
+  public transformTo(newOwner: CardOwner): Coordinates {
     let originalReferenceRect = this._reference.getBoundingClientRect();
     let newReferenceRect = this.getElement(newOwner).getBoundingClientRect();
-    return [
-      originalReferenceRect.left - newReferenceRect.left + this._location[0],
-      originalReferenceRect.top - newReferenceRect.top + this._location[1],
-    ];
+
+    let originalReferenceFrameOrigin = [originalReferenceRect.left, originalReferenceRect.top];
+    let newReferenceFrameOrigin = [newReferenceRect.left, newReferenceRect.top];
+
+    return Elementwise.map(i => {
+      return this._location[i] + originalReferenceFrameOrigin[i] - newReferenceFrameOrigin[i];
+    });
   }
 }

@@ -5,12 +5,13 @@ import '@interactjs/types'
 
 import { Suit } from './Suit';
 import './CardComponent.css';
-import { CardOwner, CardOwnerTable } from "./store/state";
+import { CardOwner, CardOwnerTable, Coordinates } from "./store/state";
 import { LocationTransformer } from "./geometry/locationTransformer";
+import { Elementwise } from "./geometry/elementwise";
 
 export type CardProps = {
   id: string,
-  location: number[],
+  location: Coordinates,
   suit: Suit,
   number: number,
   heldBy: CardOwner,
@@ -19,8 +20,8 @@ export type CardProps = {
 
   onClick: () => void,
   onPickUp: () => void,
-  onMove: (x: number, y: number) => void,
-  onDrop: (location: number[], nowHeldBy: CardOwner) => void,
+  onMove: (location: Coordinates) => void,
+  onDrop: (location: Coordinates, nowHeldBy: CardOwner) => void,
 }
 
 type CardState = {
@@ -85,16 +86,16 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             this.props.onPickUp();
           },
           move: event => {
-            var x = this.props.location[0] + event.dx
-            var y = this.props.location[1] + event.dy
-            this.props.onMove(x, y);
+            let delta = [event.dx, event.dy];
+            let newLocation = Elementwise.map(i => this.props.location[i] + delta[i]);
+            this.props.onMove(newLocation);
           },
           end: event => {
             let dropzone = event.dropzone?.target;
             let nowHeldBy = dropzone?.id ?? CardOwnerTable;
-            let transformedLocation = new LocationTransformer([this.props.location[0], this.props.location[1]], this.props.heldBy)
+            let transformedLocation = new LocationTransformer(this.props.location, this.props.heldBy)
               .transformTo(nowHeldBy)
-            this.props.onDrop([transformedLocation[0], transformedLocation[1]], nowHeldBy);
+            this.props.onDrop(transformedLocation, nowHeldBy);
           }
         }
       });

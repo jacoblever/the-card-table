@@ -16,20 +16,18 @@ export interface Card {
   suit: Suit;
   number: number;
   heldBy: CardOwner;
-  location: number[];
+  location: Coordinates;
   zIndex: number;
 }
 
 export type CardOwner = string | typeof CardOwnerTable
 export const CardOwnerTable = null;
 
-export type Location = {
-  [index in 0 | 1]: number;
-};
+export type Coordinates = [number, number];
 
 export function getInitialCardState() {
-  let cards: Card[] = []
-  let suits = [Suit.Clubs, Suit.Diamonds, Suit.Hearts, Suit.Spades]
+  let cards: Card[] = [];
+  let suits = [Suit.Clubs, Suit.Diamonds, Suit.Hearts, Suit.Spades];
   for (let suit of suits) {
     for (let i = 1; i <= 13; i++) {
       cards.push({
