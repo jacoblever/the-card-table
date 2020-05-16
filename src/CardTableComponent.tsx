@@ -1,7 +1,7 @@
 import React from 'react';
 
 import './CardTableComponent.css';
-import CardContainer from './CardContainer';
+import { CardContainer } from './CardContainer';
 import { Card } from './store/state';
 import HandContainer from "./HandContainer";
 import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
@@ -52,6 +52,7 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
           suit={card.suit}
           number={card.number}
           zIndex={card.zIndex}
+          movable={true}
         />
       )
     }

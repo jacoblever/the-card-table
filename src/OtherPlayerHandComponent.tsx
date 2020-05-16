@@ -5,6 +5,7 @@ import '@interactjs/types'
 
 import './OtherPlayerHandComponent.css';
 import { Card } from "./store/state";
+import { CardContainer } from "./CardContainer";
 
 type Props = {
   playerId: string,
@@ -63,7 +64,17 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
   render() {
     return (
       <div id={this.props.playerId} className="other-player-hand" ref={this.domElement}>
-        {this.props.playerId} has {this.props.cards.length} cards
+        {this.props.cards.map(card =>
+          <CardContainer
+            id={card.id}
+            key={card.id}
+            faceUp={false}
+            suit={card.suit}
+            number={card.number}
+            zIndex={card.zIndex}
+            movable={false}
+          />
+        )}
       </div>
     );
   }

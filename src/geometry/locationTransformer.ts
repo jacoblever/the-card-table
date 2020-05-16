@@ -3,11 +3,11 @@ import { Elementwise } from "./elementwise";
 
 export class LocationTransformer {
   private readonly _location: Coordinates;
-  private readonly _reference: HTMLElement;
+  private readonly _owner: CardOwner;
 
   constructor(location: Coordinates, owner: CardOwner) {
     this._location = location;
-    this._reference = this.getElement(owner);
+    this._owner = owner;
   }
 
   private getElement(owner: CardOwner): HTMLElement {
@@ -19,7 +19,11 @@ export class LocationTransformer {
   }
 
   public transformTo(newOwner: CardOwner): Coordinates {
-    let originalReferenceRect = this._reference.getBoundingClientRect();
+    if(this._owner === newOwner) {
+      return this._location;
+    }
+
+    let originalReferenceRect = this.getElement(this._owner).getBoundingClientRect();
     let newReferenceRect = this.getElement(newOwner).getBoundingClientRect();
 
     let originalReferenceFrameOrigin = [originalReferenceRect.left, originalReferenceRect.top];

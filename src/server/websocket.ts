@@ -1,5 +1,5 @@
 import { Dispatch, Store } from "redux";
-import { AppState } from "../store/state";
+import { AppState, CardOwnerTable } from "../store/state";
 import { animateMoveCard } from "./animations";
 import { ActionTypes, DROP_CARD, TURN_OVER_CARD, turnOverCard, WS_CONNECT, WS_DISCONNECT } from "../store/actions";
 
@@ -60,13 +60,32 @@ const socketMiddleware = () => {
         if (socket === null || socket.readyState !== WebSocket.OPEN || action.remote) {
           break;
         }
-        let remoteAction = Object.assign({}, action, { remote: true });
+        let remoteAction = {
+          ...action,
+          remote: true
+        };
         socket.send(JSON.stringify({"message":"sendmessage", "data": JSON.stringify(remoteAction)}));
         break;
       default:
         break;
     }
-    return next(action);
+    next(action);
+
+    if(action.type === DROP_CARD && !action.remote) {
+      let state = store.getState();
+      let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
+      if(droppedToOtherPlayer) {
+        if(action.location !== [0, 0]) {
+          animateMoveCard(
+            state.cards.cardsById[action.cardId],
+            [0, 0],
+            action.nowHeldBy,
+            state.cards.me,
+            (a: ActionTypes) => store.dispatch(a),
+          );
+        }
+      }
+    }
   };
 };
 

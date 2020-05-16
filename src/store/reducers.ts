@@ -1,4 +1,4 @@
-import { CardState, getInitialCardState } from "./state";
+import { Card, CardOwner, CardState, getInitialCardState } from "./state";
 import { ActionTypes, DROP_CARD, MOVE_CARD, PICK_UP_CARD, TURN_OVER_CARD } from "./actions";
 
 export function CardsReducer(
@@ -8,64 +8,67 @@ export function CardsReducer(
   if (state === undefined) {
     state = getInitialCardState();
   }
-  
+
   switch (action.type) {
     case PICK_UP_CARD:
-      let zIndexOfHighestOtherCard = Math.max(
-        ...Object.keys(state.cardsById)
-          .filter(id => id !== action.cardId)
-          .map(id => state.cardsById[id].zIndex)
-      );
+    case MOVE_CARD:
+    case DROP_CARD:
+    case TURN_OVER_CARD:
+      let maxZIndexGetter = (owner: CardOwner) => {
+        let cards = Object.keys(state.cardsById)
+          .map(id => state.cardsById[id])
+          .filter(c => c.heldBy === owner)
+          .filter(c => c.id !== action.cardId);
+        if (cards.length === 0) {
+          return 0;
+        }
+        return Math.max(
+          ...cards.map(c => c.zIndex),
+        );
+      }
+
       return {
         ...state,
         cardsById: {
           ...state.cardsById,
-          [action.cardId]: Object.assign(
-            {},
+          [action.cardId]: CardReducer(
             state.cardsById[action.cardId],
-            { zIndex: zIndexOfHighestOtherCard + 1 }
+            action,
+            maxZIndexGetter,
           ),
         }
       };
+    default:
+      return state;
+  }
+}
+
+function CardReducer(
+  state: Card,
+  action: ActionTypes,
+  maxZIndexGetter: (owner: CardOwner) => number
+): Card {
+  switch (action.type) {
+    case PICK_UP_CARD:
+      return {
+        ...state,
+        zIndex: maxZIndexGetter(state.heldBy) + 1,
+      }
     case MOVE_CARD:
       return {
         ...state,
-        cardsById: {
-          ...state.cardsById,
-          [action.cardId]: {
-            ...state.cardsById[action.cardId],
-            location: action.location,
-          },
-        }
+        location: action.location,
       };
     case DROP_CARD:
       return {
         ...state,
-        cardsById: {
-          ...state.cardsById,
-          [action.cardId]: Object.assign(
-              {},
-              state.cardsById[action.cardId],
-              { nowHeld: action.location }
-          ),
-          [action.cardId]: {
-            ...state.cardsById[action.cardId],
-            heldBy: action.nowHeldBy,
-            location: action.location,
-          },
-        }
+        heldBy: action.nowHeldBy,
+        location: action.location,
       };
     case TURN_OVER_CARD:
       return {
         ...state,
-        cardsById: {
-          ...state.cardsById,
-          [action.cardId]: Object.assign(
-            {},
-            state.cardsById[action.cardId],
-            { faceUp: !state.cardsById[action.cardId].faceUp }
-          ),
-        }
+        faceUp: !state.faceUp,
       };
     default:
       return state;

@@ -17,6 +17,7 @@ export type CardProps = {
   heldBy: CardOwner,
   faceUp: boolean,
   zIndex: number,
+  movable: boolean,
 
   onClick: () => void,
   onPickUp: () => void,
@@ -71,6 +72,9 @@ export class CardComponent extends React.Component<CardProps, CardState> {
   }
   
   componentDidMount() {
+    if(!this.props.movable) {
+      return;
+    }
     interact(this.domElement.current!)
       .draggable({
         inertia: false,
@@ -94,7 +98,7 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             let dropzone = event.dropzone?.target;
             let nowHeldBy = dropzone?.id ?? CardOwnerTable;
             let transformedLocation = new LocationTransformer(this.props.location, this.props.heldBy)
-              .transformTo(nowHeldBy)
+              .transformTo(nowHeldBy);
             this.props.onDrop(transformedLocation, nowHeldBy);
           }
         }

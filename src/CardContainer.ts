@@ -14,6 +14,7 @@ type Props = {
   number: number,
   faceUp: boolean,
   zIndex: number,
+  movable: boolean,
 }
 
 const mapStateToProps = (state: AppState, ownProps: Props) => ({
@@ -29,7 +30,7 @@ const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) =>
   onDrop: (location: Coordinates, nowHeldBy: CardOwner) => dispatch(dropCard(ownProps.id, location, nowHeldBy)),
 });
 
-export default connect(
+export const CardContainer =  connect(
   mapStateToProps,
   mapDispatchToProps
 )(CardComponent);

@@ -5,7 +5,7 @@ import '@interactjs/types'
 
 import './HandComponent.css';
 import { Card } from "./store/state";
-import CardContainer from "./CardContainer";
+import { CardContainer } from "./CardContainer";
 
 type Props = {
   playerId: string,
@@ -73,6 +73,7 @@ export class HandComponent extends React.Component<Props, {}> {
               suit={card.suit}
               number={card.number}
               zIndex={card.zIndex}
+              movable={true}
             />
           )}
         </div>
