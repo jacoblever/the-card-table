@@ -14,10 +14,9 @@ export function CardsReducer(
     case MOVE_CARD:
     case DROP_CARD:
     case TURN_OVER_CARD:
-      let maxZIndexGetter = (owner: CardOwner) => {
+      let maxZIndexGetter = () => {
         let cards = Object.keys(state.cardsById)
           .map(id => state.cardsById[id])
-          .filter(c => c.heldBy === owner)
           .filter(c => c.id !== action.cardId);
         if (cards.length === 0) {
           return 0;
@@ -46,13 +45,13 @@ export function CardsReducer(
 function CardReducer(
   state: Card,
   action: ActionTypes,
-  maxZIndexGetter: (owner: CardOwner) => number
+  maxZIndexGetter: () => number
 ): Card {
   switch (action.type) {
     case PICK_UP_CARD:
       return {
         ...state,
-        zIndex: maxZIndexGetter(state.heldBy) + 1,
+        zIndex: maxZIndexGetter() + 1,
       }
     case MOVE_CARD:
       return {
@@ -64,6 +63,7 @@ function CardReducer(
         ...state,
         heldBy: action.nowHeldBy,
         location: action.location,
+        zIndex: maxZIndexGetter() + 1,
       };
     case TURN_OVER_CARD:
       return {
