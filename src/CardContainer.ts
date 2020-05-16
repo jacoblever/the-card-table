@@ -6,22 +6,23 @@ import { pickUpCard, turnOverCard, moveCard, dropCard, ActionTypes } from './sto
 import { AppState, CardOwner, Coordinates } from "./store/state";
 import { CardComponent } from './CardComponent'
 
-import Suit from './Suit'
-
 type Props = {
   id: string,
-  suit: Suit,
-  number: number,
-  faceUp: boolean,
-  zIndex: number,
+  forceFaceDown?: boolean,
   movable: boolean,
 }
 
-const mapStateToProps = (state: AppState, ownProps: Props) => ({
-  heldBy: state.cards.cardsById[ownProps.id].heldBy,
-  location: state.cards.cardsById[ownProps.id].location,
-  zIndex: state.cards.cardsById[ownProps.id].zIndex,
-});
+const mapStateToProps = (state: AppState, ownProps: Props) => {
+  let card = state.cards.cardsById[ownProps.id];
+  return {
+    heldBy: card.heldBy,
+    faceUp: ownProps.forceFaceDown ? false : card.faceUp,
+    suit: card.suit,
+    number: card.number,
+    location: card.location,
+    zIndex: card.zIndex,
+  };
+};
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) => ({
   onClick: () => dispatch(turnOverCard(ownProps.id)),
@@ -30,7 +31,7 @@ const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) =>
   onDrop: (location: Coordinates, nowHeldBy: CardOwner) => dispatch(dropCard(ownProps.id, location, nowHeldBy)),
 });
 
-export const CardContainer =  connect(
+export const CardContainer = connect(
   mapStateToProps,
   mapDispatchToProps
 )(CardComponent);

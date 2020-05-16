@@ -68,10 +68,7 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
           <CardContainer
             id={card.id}
             key={card.id}
-            faceUp={false}
-            suit={card.suit}
-            number={card.number}
-            zIndex={card.zIndex}
+            forceFaceDown={true}
             movable={false}
           />
         )}

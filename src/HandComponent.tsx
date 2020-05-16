@@ -69,10 +69,6 @@ export class HandComponent extends React.Component<Props, {}> {
             <CardContainer
               id={card.id}
               key={card.id}
-              faceUp={card.faceUp}
-              suit={card.suit}
-              number={card.number}
-              zIndex={card.zIndex}
               movable={true}
             />
           )}
