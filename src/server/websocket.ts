@@ -43,7 +43,7 @@ const socketMiddleware = () => {
           socket.close();
         }
 
-        socket = new WebSocket("wss://5d9ccucdfa.execute-api.eu-west-1.amazonaws.com/Prod");
+        socket = new WebSocket("wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod");
         socket.onmessage = onMessage(store);
         socket.onclose = onClose(store);
         socket.onopen = onOpen(store);
