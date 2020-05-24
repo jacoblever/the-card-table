@@ -4,7 +4,7 @@ import * as cdk from '@aws-cdk/core';
 import { InfrastructureStack } from '../lib/infrastructure-stack';
 
 const app = new cdk.App();
-new InfrastructureStack(
+let stack = new InfrastructureStack(
   app,
   'TheCardRoomInfrastructure',
   {
@@ -14,3 +14,5 @@ new InfrastructureStack(
     },
   },
 );
+stack.buildStack()
+  .then(r => "Stack built");

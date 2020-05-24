@@ -1,13 +1,11 @@
-// Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
+import { DynamoDB, ApiGatewayManagementApi } from 'aws-sdk';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
-const AWS = require('aws-sdk');
-
-const ddb = new AWS.DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
+const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
 const { TABLE_NAME } = process.env;
 
-exports.handler = async event => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   let connectionData;
   
   try {
@@ -16,7 +14,7 @@ exports.handler = async event => {
     return { statusCode: 500, body: e.stack };
   }
   
-  const apigwManagementApi = new AWS.ApiGatewayManagementApi({
+  const apigwManagementApi = new ApiGatewayManagementApi({
     apiVersion: '2018-11-29',
     endpoint: event.requestContext.domainName + '/' + event.requestContext.stage
   });
@@ -24,8 +22,9 @@ exports.handler = async event => {
   const postData = JSON.parse(event.body).data;
   
   const postCalls = connectionData.Items
-    .filter(connectionId => connectionId !== event.requestContext.connectionId)
-    .map(async ({ connectionId }) => {
+    .filter(item => item['connectionId'] !== event.requestContext.connectionId)
+    .map(async (item) => {
+      let connectionId = item['connectionId'];
       try {
         if (connectionId !== event.requestContext.connectionId) {
           await apigwManagementApi.postToConnection({ ConnectionId: connectionId, Data: postData }).promise();

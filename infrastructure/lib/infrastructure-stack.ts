@@ -4,14 +4,23 @@ import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-
 import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
 import { Effect, PolicyStatement } from '@aws-cdk/aws-iam'
 import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
+import { exec, ExecException } from 'child_process'
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export class InfrastructureStack extends cdk.Stack {
+  private readonly awsRegion: string;
+  private readonly awsAccountId: string;
+
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    let awsRegion = props?.env?.region!;
-    let awsAccountId = props?.env?.account!;
+    this.awsRegion = props?.env?.region!;
+    this.awsAccountId = props?.env?.account!;
+  }
 
+  public async buildStack() {
     let api = new CfnApi(
       this,
       "api",
@@ -37,9 +46,9 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
 
-    let connectFunction = InfrastructureStack.createFunction(this, "OnConnectFunction", "../onconnect/", api);
-    let disconnectFunction = InfrastructureStack.createFunction(this, "DisconnectFunction", "../ondisconnect/", api);
-    let sendFunction = InfrastructureStack.createFunction(this, "SendFunction", "../sendmessage/", api);
+    let connectFunction = await this.createFunction("OnConnectFunction", "../onconnect/", api);
+    let disconnectFunction = await this.createFunction("DisconnectFunction", "../ondisconnect/", api);
+    let sendFunction = await this.createFunction("SendFunction", "../sendmessage/", api);
 
     [connectFunction, disconnectFunction, sendFunction].forEach(f => {
       connectionsTable.grantReadWriteData(f);
@@ -49,16 +58,16 @@ export class InfrastructureStack extends cdk.Stack {
     sendFunction.addToRolePolicy(new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ["execute-api:ManageConnections"],
-      resources: [`arn:aws:execute-api:${awsRegion}:${awsAccountId}:${api.ref}/*`],
+      resources: [`arn:aws:execute-api:${this.awsRegion}:${this.awsAccountId}:${api.ref}/*`],
     }));
 
-    let connectIntegration = InfrastructureStack.createIntegration(this, "ConnectIntegration", api, "Connect Integration", awsRegion, connectFunction);
-    let disconnectIntegration = InfrastructureStack.createIntegration(this, "DisconnectIntegration", api, "Disconnect Integration", awsRegion, disconnectFunction);
-    let sendIntegration = InfrastructureStack.createIntegration(this, "SendIntegration", api, "Send Integration", awsRegion, sendFunction);
+    let connectIntegration = this.createIntegration("ConnectIntegration", api, "Connect Integration", this.awsRegion, connectFunction);
+    let disconnectIntegration = this.createIntegration("DisconnectIntegration", api, "Disconnect Integration", this.awsRegion, disconnectFunction);
+    let sendIntegration = this.createIntegration("SendIntegration", api, "Send Integration", this.awsRegion, sendFunction);
 
-    let connectRoute = InfrastructureStack.createRoute(this, "ConnectRoute", api, "$connect", "ConnectRoute", connectIntegration);
-    let disconnectRoute = InfrastructureStack.createRoute(this, "DisconnectRoute", api, "$disconnect", "DisconnectRoute", disconnectIntegration);
-    let sendRoute = InfrastructureStack.createRoute(this, "SendRoute", api, "sendmessage", "SendRoute", sendIntegration);
+    let connectRoute = this.createRoute("ConnectRoute", api, "$connect", "ConnectRoute", connectIntegration);
+    let disconnectRoute = this.createRoute("DisconnectRoute", api, "$disconnect", "DisconnectRoute", disconnectIntegration);
+    let sendRoute = this.createRoute("SendRoute", api, "sendmessage", "SendRoute", sendIntegration);
 
     let deployment = new CfnDeployment(
       this,
@@ -87,14 +96,14 @@ export class InfrastructureStack extends cdk.Stack {
       "WebSocketURI",
       {
         description: "The WSS Protocol URI to connect to",
-        value: `wss://${api.ref}.execute-api.${awsRegion}.amazonaws.com/${stage.ref}`,
+        value: `wss://${api.ref}.execute-api.${this.awsRegion}.amazonaws.com/${stage.ref}`,
       }
     );
   }
 
-  private static createIntegration(scope: Construct, id: string, api: CfnApi, description: string, awsRegion: string, func: LambdaFunction) {
+  private createIntegration(id: string, api: CfnApi, description: string, awsRegion: string, func: LambdaFunction) {
     return new CfnIntegration(
-      scope,
+      this,
       id,
       {
         apiId: api.ref,
@@ -105,9 +114,9 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-  private static createRoute(scope: Construct, id: string, api: CfnApi, routeKey: string, operationName: string, integration: CfnIntegration) {
+  private createRoute(id: string, api: CfnApi, routeKey: string, operationName: string, integration: CfnIntegration) {
     return new CfnRoute(
-      scope,
+      this,
       id,
       {
         apiId: api.ref,
@@ -119,9 +128,13 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-  private static createFunction(scope: Construct, id: string, codeUri: string, api: CfnApi) {
+  private async createFunction(id: string, codeUri: string, api: CfnApi) {
+    await execAsync(`cd ${codeUri} && npm run build`).then(
+      r => console.log(`${id} (${codeUri}) compiled`)
+    );
+
     let func = new LambdaFunction(
-      scope,
+      this,
       id,
       {
         code: Code.fromAsset(codeUri),
@@ -131,7 +144,7 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
     let permission = new CfnPermission(
-      scope,
+      this,
       `${id}Permission`,
       {
         action: "lambda:InvokeFunction",
