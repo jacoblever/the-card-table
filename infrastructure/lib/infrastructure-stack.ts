@@ -36,7 +36,30 @@ export class InfrastructureStack extends cdk.Stack {
       'ConnectionsTable',
       {
         partitionKey: {
+          name: 'roomId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
           name: 'connectionId',
+          type: AttributeType.STRING,
+        },
+        readCapacity: 5,
+        writeCapacity: 5,
+        encryption: TableEncryption.AWS_MANAGED,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      },
+    );
+
+    let cardsTable = new Table(
+      this,
+      'CardsTable',
+      {
+        partitionKey: {
+          name: 'roomId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'cardId',
           type: AttributeType.STRING,
         },
         readCapacity: 5,
@@ -52,7 +75,9 @@ export class InfrastructureStack extends cdk.Stack {
 
     [connectFunction, disconnectFunction, sendFunction].forEach(f => {
       connectionsTable.grantReadWriteData(f);
-      f.addEnvironment("TABLE_NAME", connectionsTable.tableName);
+      cardsTable.grantReadWriteData(f);
+      f.addEnvironment("TABLE_NAME_CONNECTIONS", connectionsTable.tableName);
+      f.addEnvironment("TABLE_NAME_CARDS", cardsTable.tableName);
     });
 
     sendFunction.addToRolePolicy(new PolicyStatement({

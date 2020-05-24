@@ -11,6 +11,8 @@ node_modules
 # generated files
 */app.js
 */app.js.map
+backend/**/*.js
+backend/**/*.js.map
 
 # production
 /build
