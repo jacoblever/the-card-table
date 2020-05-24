@@ -3,8 +3,8 @@ import { CfnOutput, Construct } from '@aws-cdk/core';
 import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-cdk/aws-apigatewayv2'
 import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
 import { Effect, PolicyStatement } from '@aws-cdk/aws-iam'
-import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
-import { exec, ExecException } from 'child_process'
+import { AttributeType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
+import { exec } from 'child_process'
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -69,9 +69,9 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
 
-    let connectFunction = await this.createFunction("OnConnectFunction", "../onconnect/", api);
-    let disconnectFunction = await this.createFunction("DisconnectFunction", "../ondisconnect/", api);
-    let sendFunction = await this.createFunction("SendFunction", "../sendmessage/", api);
+    let connectFunction = await this.createFunction("OnConnectFunction", "../backend/onconnect/", api);
+    let disconnectFunction = await this.createFunction("DisconnectFunction", "../backend/ondisconnect/", api);
+    let sendFunction = await this.createFunction("SendFunction", "../backend/sendmessage/", api);
 
     [connectFunction, disconnectFunction, sendFunction].forEach(f => {
       connectionsTable.grantReadWriteData(f);
