@@ -1,13 +1,25 @@
 import { Dispatch, Store } from "redux";
 import { AppState, CardOwnerTable } from "../store/state";
 import { animateMoveCard } from "./animations";
-import { ActionTypes, DROP_CARD, TURN_OVER_CARD, turnOverCard, WS_CONNECT, WS_DISCONNECT } from "../store/actions";
+import {
+  ActionTypes,
+  DROP_CARD,
+  INITIAL_CARD_STATE,
+  TURN_OVER_CARD,
+  turnOverCard,
+  WS_CONNECT,
+  WS_DISCONNECT
+} from "../store/actions";
 
 const socketMiddleware = () => {
   let socket: WebSocket | null = null;
 
   const onOpen = (store: Store<AppState, ActionTypes>) => (event: Event) => {
     console.log('websocket open');
+    let action = {
+      type: "GET_INITIAL_STATE",
+    };
+    socket!.send(JSON.stringify({"message":"sendmessage", "data": JSON.stringify(action)}));
   };
 
   const onClose = (store: Store<AppState, ActionTypes>) => (event: CloseEvent) => {
@@ -30,6 +42,9 @@ const socketMiddleware = () => {
         break;
       case TURN_OVER_CARD:
         store.dispatch(turnOverCard(message.cardId, true));
+        break;
+      case INITIAL_CARD_STATE:
+        store.dispatch(message);
         break;
       default:
         break;

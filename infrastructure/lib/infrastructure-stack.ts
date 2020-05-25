@@ -154,7 +154,13 @@ export class InfrastructureStack extends cdk.Stack {
   }
 
   private async createFunction(id: string, codeUri: string, api: CfnApi) {
-    await execAsync(`cd ${codeUri} && npm run build`).then(
+    let buildCommands = [
+      `cd ${codeUri}`,
+      `cp ../build.sh ./`,
+      `./build.sh`,
+      `rm build.sh`,
+    ];
+    await execAsync(buildCommands.join(' && ')).then(
       r => console.log(`${id} (${codeUri}) compiled`)
     );
 

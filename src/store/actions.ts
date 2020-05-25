@@ -1,4 +1,4 @@
-import { CardOwner, Coordinates } from "./state";
+import { CardOwner, CardState, Coordinates } from "./state";
 
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
@@ -6,6 +6,7 @@ export const DROP_CARD = "DROP_CARD";
 export const TURN_OVER_CARD = "TURN_OVER_CARD";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
+export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 
 interface RemoteAction {
     remote: boolean;
@@ -42,12 +43,18 @@ export interface WsDisconnectAction {
     type: typeof WS_DISCONNECT;
 }
 
+export interface InitialCardStateAction {
+    type: typeof INITIAL_CARD_STATE;
+    state: CardState;
+}
+
 export type ActionTypes = PickUpCardAction
     | MoveCardAction
     | DropCardAction
     | TurnOverCardAction
     | WsConnectAction
-    | WsDisconnectAction;
+    | WsDisconnectAction
+    | InitialCardStateAction;
 
 export function pickUpCard(cardId: string): ActionTypes {
   return {

@@ -1,15 +1,21 @@
-import { Card, CardOwner, CardState, getInitialCardState } from "./state";
-import { ActionTypes, DROP_CARD, MOVE_CARD, PICK_UP_CARD, TURN_OVER_CARD } from "./actions";
+import { Card, CardState } from "./state";
+import { ActionTypes, DROP_CARD, INITIAL_CARD_STATE, MOVE_CARD, PICK_UP_CARD, TURN_OVER_CARD } from "./actions";
 
 export function CardsReducer(
   state: CardState,
   action: ActionTypes,
 ): CardState {
   if (state === undefined) {
-    state = getInitialCardState();
+    state = {
+      cardsById: {},
+      players: [],
+      me: "a",
+    };
   }
 
   switch (action.type) {
+    case INITIAL_CARD_STATE:
+      return action.state;
     case PICK_UP_CARD:
     case MOVE_CARD:
     case DROP_CARD:
