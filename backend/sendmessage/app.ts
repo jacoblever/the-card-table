@@ -1,30 +1,14 @@
-import { DynamoDB } from 'aws-sdk';
 import {
   APIGatewayEventDefaultAuthorizerContext,
   APIGatewayProxyEvent,
   APIGatewayProxyEventBase,
   APIGatewayProxyResult
 } from "aws-lambda";
-import { getLambdaEnv } from "../common/env";
 import { pushMessage } from "../common/pushMessage";
-import { BackendCard, BackendCardState } from "../common/cards";
+import { BackendCardState, databaseToBackendCard } from "../common/cards";
+import { getCards, getConnections, markConnectionAsStale } from "../common/database";
 
-const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
-const roomId = "TestRoom";
-
-const connectionsTableName = getLambdaEnv().ConnectionsTableName;
-
-let getConnections = async () => {
-  return await ddb.query({
-    TableName: connectionsTableName,
-    KeyConditionExpression: 'roomId = :roomId',
-    ExpressionAttributeValues: {
-      ':roomId': roomId,
-    }
-  }).promise();
-}
-
-let pushToConnections = async (connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
+let pushToConnections = async (roomId: string, connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
   const postCalls = connectionIds
     .map(async (connectionId) => {
       try {
@@ -32,13 +16,7 @@ let pushToConnections = async (connectionIds: any[], event: APIGatewayProxyEvent
       } catch (e) {
         if (e.statusCode === 410) {
           console.log(`Found stale connection, deleting ${connectionId}`);
-          await ddb.delete({
-            TableName: connectionsTableName,
-            Key: {
-              roomId: roomId,
-              connectionId: connectionId,
-            },
-          }).promise();
+          await markConnectionAsStale(roomId, connectionId);
         } else {
           throw e;
         }
@@ -48,67 +26,39 @@ let pushToConnections = async (connectionIds: any[], event: APIGatewayProxyEvent
   await Promise.all(postCalls);
 }
 
-let uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    // eslint-disable-next-line
-    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-};
-
-let getInitialCardState = () => {
-  let cards: BackendCard[] = [];
-  let suits: (0 | 1 | 2 | 3)[] = [0, 1, 2, 3];
-  for (let suit of suits) {
-    for (let i = 1; i <= 13; i++) {
-      cards.push({
-        id: uuidv4(),
-        faceUp: false,
-        suit: suit,
-        number: i,
-        heldBy: null,
-        location: [300, 150],
-        zIndex: 0,
-      });
-    }
-  }
-  cards.sort(() => Math.random() - 0.5);
-  for (let i = 0; i < cards.length; i++) {
-    const card = cards[i];
-    card.zIndex = i;
-  }
-  let cardState: BackendCardState = {
-    cardsById: {},
-    players: ["a", "b", "c"],
-    me: "a",
-  }
-  for (const card of cards) {
-    cardState.cardsById[card.id] = card;
-  }
-  return cardState;
-}
-
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   let senderConnectionId = event.requestContext.connectionId;
 
-  const action: string = JSON.parse(event.body).data;
+  let body = JSON.parse(event.body);
+  const action = body.data as string;
+  const roomId = body.roomId as string;
 
   if(JSON.parse(action).type === "GET_INITIAL_STATE") {
+    let connections = await getConnections(roomId);
+    let me = connections.filter(x => x.connectionId === senderConnectionId)[0].playerId;
+    let cardState: BackendCardState = {
+      cardsById: {},
+      players: [...new Set(connections.map(x => x.playerId))],
+      me: me,
+    };
+    let cards = await getCards(roomId);
+    for (const card of cards) {
+       cardState.cardsById[card.cardId] = databaseToBackendCard(card);
+     }
     let action = JSON.stringify({
       type: "INITIAL_CARD_STATE",
-      state: getInitialCardState(),
+      state: cardState,
     });
     await pushMessage(event.requestContext, senderConnectionId, action);
     return { statusCode: 200, body: 'Data sent.' };
   }
 
-  let connectionData = await getConnections();
-
-  let otherConnectionIds = connectionData.Items
-    .map(item => item['connectionId'])
+  let connections = await getConnections(roomId);
+  let otherConnectionIds = connections
+    .map(x => x.connectionId)
     .filter(id => id !== event.requestContext.connectionId);
 
-  await pushToConnections(otherConnectionIds, event, action);
+  await pushToConnections(roomId, otherConnectionIds, event, action);
 
   return { statusCode: 200, body: 'Data sent.' };
 };

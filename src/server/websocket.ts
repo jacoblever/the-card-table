@@ -1,4 +1,5 @@
 import { Dispatch, Store } from "redux";
+import Cookies from "js-cookie"
 import { AppState, CardOwnerTable } from "../store/state";
 import { animateMoveCard } from "./animations";
 import {
@@ -11,6 +12,16 @@ import {
   WS_DISCONNECT
 } from "../store/actions";
 
+function getRoomId() {
+  return window.location.pathname.split('/')[1];
+}
+
+function getWebSocketPath() {
+  let roomId = getRoomId();
+  let playerId = Cookies.get(`playerId-${roomId}`) ?? "NewPlayer";
+  return `wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod?room-id=${roomId}&player-id=${playerId}`;
+}
+
 const socketMiddleware = () => {
   let socket: WebSocket | null = null;
 
@@ -19,7 +30,11 @@ const socketMiddleware = () => {
     let action = {
       type: "GET_INITIAL_STATE",
     };
-    socket!.send(JSON.stringify({"message":"sendmessage", "data": JSON.stringify(action)}));
+    socket!.send(JSON.stringify({
+      "message":"sendmessage",
+      "data": JSON.stringify(action),
+      "roomId": getRoomId(),
+    }));
   };
 
   const onClose = (store: Store<AppState, ActionTypes>) => (event: CloseEvent) => {
@@ -44,6 +59,7 @@ const socketMiddleware = () => {
         store.dispatch(turnOverCard(message.cardId, true));
         break;
       case INITIAL_CARD_STATE:
+        Cookies.set(`playerId-${getRoomId()}`, message.state.me)
         store.dispatch(message);
         break;
       default:
@@ -58,7 +74,7 @@ const socketMiddleware = () => {
           socket.close();
         }
 
-        socket = new WebSocket("wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod");
+        socket = new WebSocket(getWebSocketPath());
         socket.onmessage = onMessage(store);
         socket.onclose = onClose(store);
         socket.onopen = onOpen(store);
@@ -79,7 +95,11 @@ const socketMiddleware = () => {
           ...action,
           remote: true
         };
-        socket.send(JSON.stringify({"message":"sendmessage", "data": JSON.stringify(remoteAction)}));
+        socket.send(JSON.stringify({
+          "message":"sendmessage",
+          "data": JSON.stringify(remoteAction),
+          "roomId": getRoomId(),
+        }));
         break;
       default:
         break;

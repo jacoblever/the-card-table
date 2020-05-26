@@ -4,27 +4,12 @@
 // $disconnect is a best-effort event. 
 // API Gateway will try its best to deliver the $disconnect event to your integration, but it cannot guarantee delivery.
 
-import { DynamoDB } from 'aws-sdk';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { getLambdaEnv } from "../common/env";
+import { markConnectionAsStale } from "../common/database";
 
-const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 const roomId = "TestRoom";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const deleteParams = {
-    TableName: getLambdaEnv().ConnectionsTableName,
-    Key: {
-      roomId: roomId,
-      connectionId: event.requestContext.connectionId
-    }
-  };
-
-  try {
-    await ddb.delete(deleteParams).promise();
-  } catch (err) {
-    return { statusCode: 500, body: 'Failed to disconnect: ' + JSON.stringify(err) };
-  }
-
+  await markConnectionAsStale(roomId, event.requestContext.connectionId);
   return { statusCode: 200, body: 'Disconnected.' };
 };
