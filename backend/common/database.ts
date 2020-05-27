@@ -1,5 +1,6 @@
 import { getLambdaEnv } from "./env";
 import { DynamoDB } from 'aws-sdk';
+import { BackendCard } from "./cards";
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
@@ -102,4 +103,30 @@ export const putCards = async (cards: DatabaseCard[]) => {
   await ddb.batchWrite({
     RequestItems: requestItems,
   }).promise();
+};
+
+type CardDrop = {
+  roomId: string;
+  cardId: string;
+  newLocation: [number, number];
+  newHeldBy: string | null;
 }
+
+export const storeCardDrop = async (cardDrop: CardDrop) => {
+  await ddb.update({
+    TableName: getLambdaEnv().CardsTableName,
+    Key: {
+      roomId: cardDrop.roomId,
+      cardId: cardDrop.cardId,
+    },
+    UpdateExpression: 'set heldBy = :newHeldBy, #l = :newLocation',
+    ExpressionAttributeNames: {
+      '#l': 'location',
+    },
+    ExpressionAttributeValues: {
+      ':newHeldBy': cardDrop.newHeldBy,
+      ':newLocation': cardDrop.newLocation,
+      // TODO ':zIndex': card.zIndex,
+    }
+  }).promise();
+};

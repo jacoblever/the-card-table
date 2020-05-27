@@ -6,7 +6,7 @@ import {
 } from "aws-lambda";
 import { pushMessage } from "../common/pushMessage";
 import { BackendCardState, databaseToBackendCard } from "../common/cards";
-import { getCards, getConnections, markConnectionAsStale } from "../common/database";
+import { getCards, getConnections, markConnectionAsStale, storeCardDrop } from "../common/database";
 
 let pushToConnections = async (roomId: string, connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
   const postCalls = connectionIds
@@ -30,10 +30,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let senderConnectionId = event.requestContext.connectionId;
 
   let body = JSON.parse(event.body);
-  const action = body.data as string;
+  const actionString = body.data as string;
   const roomId = body.roomId as string;
+  const action = JSON.parse(actionString);
 
-  if(JSON.parse(action).type === "GET_INITIAL_STATE") {
+  if(action.type === "GET_INITIAL_STATE") {
     let connections = await getConnections(roomId);
     let me = connections.filter(x => x.connectionId === senderConnectionId)[0].playerId;
     let cardState: BackendCardState = {
@@ -58,7 +59,17 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     .map(x => x.connectionId)
     .filter(id => id !== event.requestContext.connectionId);
 
-  await pushToConnections(roomId, otherConnectionIds, event, action);
+  switch (action.type) {
+    case "DROP_CARD":
+      await storeCardDrop({
+        roomId: roomId,
+        cardId: action.cardId,
+        newHeldBy: action.nowHeldBy,
+        newLocation: action.location,
+      });
+      break;
+  }
+  await pushToConnections(roomId, otherConnectionIds, event, actionString);
 
   return { statusCode: 200, body: 'Data sent.' };
 };
