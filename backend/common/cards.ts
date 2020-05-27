@@ -1,3 +1,5 @@
+import { DatabaseCard } from "./database";
+
 export interface BackendCard {
   id: string;
   faceUp: boolean;
