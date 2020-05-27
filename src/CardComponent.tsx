@@ -22,7 +22,7 @@ export type CardProps = {
   onClick: () => void,
   onPickUp: () => void,
   onMove: (location: Coordinates) => void,
-  onDrop: (location: Coordinates, nowHeldBy: CardOwner) => void,
+  onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
 }
 
 type CardState = {
@@ -99,7 +99,7 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             let nowHeldBy = dropzone?.id ?? CardOwnerTable;
             let transformedLocation = new LocationTransformer(this.props.location, this.props.heldBy)
               .transformTo(nowHeldBy);
-            this.props.onDrop(transformedLocation, nowHeldBy);
+            this.props.onDrop(transformedLocation, this.props.zIndex, nowHeldBy);
           }
         }
       });

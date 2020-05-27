@@ -69,7 +69,7 @@ function CardReducer(
         ...state,
         heldBy: action.nowHeldBy,
         location: action.location,
-        zIndex: maxZIndexGetter() + 1,
+        zIndex: action.zIndex,
       };
     case TURN_OVER_CARD:
       return {

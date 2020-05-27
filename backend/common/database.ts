@@ -1,6 +1,5 @@
 import { getLambdaEnv } from "./env";
 import { DynamoDB } from 'aws-sdk';
-import { BackendCard } from "./cards";
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
@@ -10,10 +9,10 @@ type DbConnection = {
   playerId: string;
 }
 
-export interface DatabaseCard {
+export type DatabaseCard = {
   cardId: string;
   roomId: string;
-  faceUp: boolean;
+  flipCount: number; // odd means face up, even means face down
   suit: 0 | 1 | 2 | 3;
   number: number;
   heldBy: null;
@@ -30,7 +29,11 @@ export const getConnections = async (roomId: string) => {
     }
   }).promise();
 
-  return result.Items.map<DbConnection>(x => {
+  let items = result.Items;
+  if(!items){
+    return [];
+  }
+  return items.map<DbConnection>(x => {
     return {
       roomId: x['roomId'],
       connectionId: x['connectionId'],
@@ -76,11 +79,15 @@ export const getCards = async (roomId: string) => {
     }
   }).promise();
 
-  return result.Items.map<DatabaseCard>(card => {
+  let items = result.Items;
+  if(!items){
+    return [];
+  }
+  return items.map<DatabaseCard>(card => {
     return {
       cardId: card['cardId'],
       roomId: card['roomId'],
-      faceUp: card['faceUp'],
+      flipCount: card['flipCount'],
       suit: card['suit'],
       number: card['number'],
       heldBy: card['heldBy'],
@@ -109,6 +116,7 @@ type CardDrop = {
   roomId: string;
   cardId: string;
   newLocation: [number, number];
+  newZIndex: number;
   newHeldBy: string | null;
 }
 
@@ -119,14 +127,33 @@ export const storeCardDrop = async (cardDrop: CardDrop) => {
       roomId: cardDrop.roomId,
       cardId: cardDrop.cardId,
     },
-    UpdateExpression: 'set heldBy = :newHeldBy, #l = :newLocation',
+    UpdateExpression: 'set #l = :newLocation, zIndex = :newZIndex, heldBy = :newHeldBy',
     ExpressionAttributeNames: {
       '#l': 'location',
     },
     ExpressionAttributeValues: {
       ':newHeldBy': cardDrop.newHeldBy,
       ':newLocation': cardDrop.newLocation,
-      // TODO ':zIndex': card.zIndex,
+      ':newZIndex': cardDrop.newZIndex,
+    }
+  }).promise();
+};
+
+type CardFlip = {
+  roomId: string;
+  cardId: string;
+}
+
+export const storeCardFlip = async (cardFlip: CardFlip) => {
+  await ddb.update({
+    TableName: getLambdaEnv().CardsTableName,
+    Key: {
+      roomId: cardFlip.roomId,
+      cardId: cardFlip.cardId,
+    },
+    UpdateExpression: 'add flipCount :one',
+    ExpressionAttributeValues: {
+      ':one': 1,
     }
   }).promise();
 };

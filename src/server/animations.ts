@@ -16,7 +16,7 @@ let getEndLocationInFinalOwnersFrame = (card: Card, endLocation: Coordinates, no
   return [0, 0] as Coordinates;
 }
 
-export const animateMoveCard = (card: Card, endLocation: Coordinates, nowHeldBy: CardOwner, me: string, dispatch: (action: ActionTypes) => void) => {
+export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZIndex: number, nowHeldBy: CardOwner, me: string, dispatch: (action: ActionTypes) => void) => {
   let duration = 300;
   let framesPerSecond = 60;
   let stepPercent = 1 / ((duration / 1000) * framesPerSecond);
@@ -43,7 +43,7 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, nowHeldBy:
         dispatch(moveCard(card.id, nextLocation));
 
         if(stepPercent * stepNumber === 1) {
-          dispatch(dropCard(card.id, endInFinalOwnersFrame, nowHeldBy, true));
+          dispatch(dropCard(card.id, endInFinalOwnersFrame, finalZIndex, nowHeldBy, true));
         }
 
         stepNumber += 1;

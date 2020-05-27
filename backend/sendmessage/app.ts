@@ -6,7 +6,7 @@ import {
 } from "aws-lambda";
 import { pushMessage } from "../common/pushMessage";
 import { BackendCardState, databaseToBackendCard } from "../common/cards";
-import { getCards, getConnections, markConnectionAsStale, storeCardDrop } from "../common/database";
+import { getCards, getConnections, markConnectionAsStale, storeCardDrop, storeCardFlip } from "../common/database";
 
 let pushToConnections = async (roomId: string, connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
   const postCalls = connectionIds
@@ -43,8 +43,12 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       me: me,
     };
     let cards = await getCards(roomId);
-    for (const card of cards) {
-       cardState.cardsById[card.cardId] = databaseToBackendCard(card);
+    for (const dbCard of cards) {
+      let card = databaseToBackendCard(dbCard);
+      if(card.heldBy && card.heldBy !== me) {
+        card.location = [0, 0];
+      }
+      cardState.cardsById[dbCard.cardId] = card;
      }
     let action = JSON.stringify({
       type: "INITIAL_CARD_STATE",
@@ -64,8 +68,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       await storeCardDrop({
         roomId: roomId,
         cardId: action.cardId,
-        newHeldBy: action.nowHeldBy,
         newLocation: action.location,
+        newZIndex: action.zIndex,
+        newHeldBy: action.nowHeldBy,
+      });
+      break;
+    case "TURN_OVER_CARD":
+      await storeCardFlip({
+        roomId: roomId,
+        cardId: action.cardId,
       });
       break;
   }

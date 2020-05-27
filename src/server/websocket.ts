@@ -46,10 +46,10 @@ const socketMiddleware = () => {
     let currentState = store.getState();
     switch (message.type) {
       case DROP_CARD:
-        let endLocation = message.location;
         animateMoveCard(
           currentState.cards.cardsById[message.cardId],
-          endLocation,
+          message.location,
+          message.zIndex,
           message.nowHeldBy,
           currentState.cards.me,
           (a: ActionTypes) => store.dispatch(a),
@@ -111,9 +111,11 @@ const socketMiddleware = () => {
       let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
       if(droppedToOtherPlayer) {
         if(action.location !== [0, 0]) {
+          let card = state.cards.cardsById[action.cardId];
           animateMoveCard(
-            state.cards.cardsById[action.cardId],
+            card,
             [0, 0],
+            card.zIndex,
             action.nowHeldBy,
             state.cards.me,
             (a: ActionTypes) => store.dispatch(a),

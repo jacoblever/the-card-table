@@ -27,6 +27,7 @@ export interface DropCardAction extends RemoteAction {
     type: typeof DROP_CARD;
     cardId: string;
     location: Coordinates;
+    zIndex: number;
     nowHeldBy: CardOwner;
 }
 
@@ -73,12 +74,13 @@ export function moveCard(cardId: string, location: Coordinates): ActionTypes {
   };
 }
 
-export function dropCard(cardId: string, location: Coordinates, nowHeldBy: CardOwner, remote: boolean = false): ActionTypes {
+export function dropCard(cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner, remote: boolean = false): ActionTypes {
   return {
     type: DROP_CARD,
     remote: remote,
     cardId: cardId,
     location: location,
+    zIndex: zIndex,
     nowHeldBy: nowHeldBy,
   };
 }

@@ -1,6 +1,6 @@
 import { DatabaseCard } from "./database";
 
-export interface BackendCard {
+export type BackendCard = {
   id: string;
   faceUp: boolean;
   suit: 0 | 1 | 2 | 3;
@@ -11,15 +11,16 @@ export interface BackendCard {
 }
 
 export const databaseToBackendCard = (card: DatabaseCard) => {
-  return {
+  let backendCard: BackendCard = {
     id: card.cardId,
-    faceUp: card.faceUp,
+    faceUp: card.flipCount % 2 === 1,
     suit: card.suit,
     number: card.number,
     heldBy: card.heldBy,
     location: card.location,
     zIndex: card.zIndex,
-  } as BackendCard;
+  };
+  return backendCard;
 }
 
 export interface BackendCardState {

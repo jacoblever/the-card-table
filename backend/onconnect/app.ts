@@ -17,7 +17,7 @@ let getInitialCards = (roomId: string) => {
       cards.push({
         cardId: uuidv4(),
         roomId: roomId,
-        faceUp: false,
+        flipCount: 0,
         suit: suit,
         number: i,
         heldBy: null,

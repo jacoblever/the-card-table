@@ -28,7 +28,7 @@ const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) =>
   onClick: () => dispatch(turnOverCard(ownProps.id)),
   onPickUp: () => dispatch(pickUpCard(ownProps.id)),
   onMove: (location: Coordinates) => dispatch(moveCard(ownProps.id, location)),
-  onDrop: (location: Coordinates, nowHeldBy: CardOwner) => dispatch(dropCard(ownProps.id, location, nowHeldBy)),
+  onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => dispatch(dropCard(ownProps.id, location, zIndex, nowHeldBy)),
 });
 
 export const CardContainer = connect(
