@@ -4,13 +4,17 @@ import { DynamoDB } from 'aws-sdk';
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
 type DbConnection = {
+  /** partition key */
   roomId: string;
+  /** sort key */
   connectionId: string;
   playerId: string;
 }
 
 export type DatabaseCard = {
+  /** sort key */
   cardId: string;
+  /** partition key */
   roomId: string;
   flipCount: number; // odd means face up, even means face down
   suit: 0 | 1 | 2 | 3;
