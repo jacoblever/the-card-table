@@ -1,9 +1,9 @@
 import * as cdk from '@aws-cdk/core';
-import { CfnOutput, Construct } from '@aws-cdk/core';
+import { CfnOutput } from '@aws-cdk/core';
 import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-cdk/aws-apigatewayv2'
 import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
 import { Effect, PolicyStatement } from '@aws-cdk/aws-iam'
-import { AttributeType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
+import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
 import { exec } from 'child_process'
 import { promisify } from 'util';
 
@@ -31,6 +31,25 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
 
+    let playersTable = new Table(
+      this,
+      'PlayersTable',
+      {
+        partitionKey: {
+          name: 'roomId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'playerId',
+          type: AttributeType.STRING,
+        },
+        readCapacity: 5,
+        writeCapacity: 5,
+        encryption: TableEncryption.AWS_MANAGED,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      },
+    );
+
     let connectionsTable = new Table(
       this,
       'ConnectionsTable',
@@ -49,6 +68,16 @@ export class InfrastructureStack extends cdk.Stack {
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       },
     );
+    connectionsTable.addGlobalSecondaryIndex({
+      indexName: 'findByConnectionId',
+      partitionKey: {
+        name: 'connectionId',
+        type: AttributeType.STRING,
+      },
+      readCapacity: 5,
+      writeCapacity: 5,
+      projectionType: ProjectionType.ALL,
+    })
 
     let cardsTable = new Table(
       this,
@@ -74,8 +103,10 @@ export class InfrastructureStack extends cdk.Stack {
     let sendFunction = await this.createFunction("SendFunction", "../backend/sendmessage/", api);
 
     [connectFunction, disconnectFunction, sendFunction].forEach(f => {
+      playersTable.grantReadWriteData(f);
       connectionsTable.grantReadWriteData(f);
       cardsTable.grantReadWriteData(f);
+      f.addEnvironment("TABLE_NAME_PLAYERS", playersTable.tableName);
       f.addEnvironment("TABLE_NAME_CONNECTIONS", connectionsTable.tableName);
       f.addEnvironment("TABLE_NAME_CARDS", cardsTable.tableName);
     });

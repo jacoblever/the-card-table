@@ -7,9 +7,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { markConnectionAsStale } from "../common/database";
 
-const roomId = "TestRoom";
-
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  await markConnectionAsStale(roomId, event.requestContext.connectionId);
+  await markConnectionAsStale(event.requestContext.connectionId);
   return { statusCode: 200, body: 'Disconnected.' };
 };

@@ -3,13 +3,19 @@ import { DynamoDB } from 'aws-sdk';
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
-type DbConnection = {
+type DbPlayer = {
   /** partition key */
   roomId: string;
   /** sort key */
-  connectionId: string;
   playerId: string;
-}
+};
+
+type DbConnection = {
+  /** partition key */
+  connectionId: string;
+  roomId: string;
+  playerId: string;
+};
 
 export type DatabaseCard = {
   /** sort key */
@@ -22,7 +28,65 @@ export type DatabaseCard = {
   heldBy: null;
   location: [number, number];
   zIndex: number;
-}
+};
+
+export const putPlayer = async (player: DbPlayer) => {
+  await ddb.put({
+    TableName: getLambdaEnv().PlayersTableName,
+    Item: player,
+  }).promise();
+};
+
+export const getPlayers = async (roomId: string) => {
+  let result = await ddb.query({
+    TableName: getLambdaEnv().PlayersTableName,
+    KeyConditionExpression: 'roomId = :roomId',
+    ExpressionAttributeValues: {
+      ':roomId': roomId,
+    }
+  }).promise();
+
+  let items = result.Items;
+  if(!items){
+    return [];
+  }
+  return items.map<DbPlayer>(x => {
+    return {
+      roomId: x['roomId'],
+      playerId: x['playerId'],
+    };
+  });
+};
+
+export const putConnection = async (connection: DbConnection) => {
+  await ddb.put({
+    TableName: getLambdaEnv().ConnectionsTableName,
+    Item: connection,
+  }).promise();
+};
+
+export const getConnection = async (connectionId: string) => {
+  let result = await ddb.query({
+    TableName: getLambdaEnv().ConnectionsTableName,
+    IndexName: 'findByConnectionId',
+    KeyConditionExpression: 'connectionId = :connectionId',
+    ExpressionAttributeValues: {
+      ':connectionId': connectionId,
+    }
+  }).promise();
+
+  let items = result.Items;
+  if(!items || items.length === 0) {
+    return null;
+  }
+  let item = items[0];
+  let connection: DbConnection = {
+    connectionId: item['connectionId'],
+    roomId: item['roomId'],
+    playerId: item['playerId'],
+  };
+  return connection;
+};
 
 export const getConnections = async (roomId: string) => {
   let result = await ddb.query({
@@ -34,41 +98,27 @@ export const getConnections = async (roomId: string) => {
   }).promise();
 
   let items = result.Items;
-  if(!items){
+  if(!items) {
     return [];
   }
-  return items.map<DbConnection>(x => {
+  return items.map<DbConnection>(item => {
     return {
-      roomId: x['roomId'],
-      connectionId: x['connectionId'],
-      playerId: x['playerId'],
+      connectionId: item['connectionId'],
+      roomId: item['roomId'],
+      playerId: item['playerId'],
     };
   });
 };
 
-// let getConnection = async (roomId: string, connectionId: string) => {
-//   return await ddb.query({
-//     TableName: lambdaEnv.ConnectionsTableName,
-//     KeyConditionExpression: 'roomId = :roomId AND connectionId = :connectionId',
-//     ExpressionAttributeValues: {
-//       ':roomId': roomId,
-//       ':connectionId': connectionId,
-//     }
-//   }).promise();
-// }
-
-export const putConnection = async (connection: DbConnection) => {
-  await ddb.put({
-    TableName: getLambdaEnv().ConnectionsTableName,
-    Item: connection,
-  }).promise();
-};
-
-export const markConnectionAsStale = async (roomId: string, connectionId: string) => {
+export const markConnectionAsStale = async (connectionId: string) => {
+  let connection = await getConnection(connectionId);
+  if(connection === null) {
+    return;
+  }
   await ddb.delete({
     TableName: getLambdaEnv().ConnectionsTableName,
     Key: {
-      roomId: roomId,
+      roomId: connection.roomId,
       connectionId: connectionId,
     },
   }).promise();

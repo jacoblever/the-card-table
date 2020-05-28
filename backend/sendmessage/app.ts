@@ -6,7 +6,14 @@ import {
 } from "aws-lambda";
 import { pushMessage } from "../common/pushMessage";
 import { BackendCardState, databaseToBackendCard } from "../common/cards";
-import { getCards, getConnections, markConnectionAsStale, storeCardDrop, storeCardFlip } from "../common/database";
+import {
+  getCards,
+  getConnection, getConnections,
+  getPlayers,
+  markConnectionAsStale,
+  storeCardDrop,
+  storeCardFlip
+} from "../common/database";
 
 let pushToConnections = async (roomId: string, connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
   const postCalls = connectionIds
@@ -16,7 +23,7 @@ let pushToConnections = async (roomId: string, connectionIds: any[], event: APIG
       } catch (e) {
         if (e.statusCode === 410) {
           console.log(`Found stale connection, deleting ${connectionId}`);
-          await markConnectionAsStale(roomId, connectionId);
+          await markConnectionAsStale(connectionId);
         } else {
           throw e;
         }
@@ -35,11 +42,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const action = JSON.parse(actionString);
 
   if(action.type === "GET_INITIAL_STATE") {
-    let connections = await getConnections(roomId);
-    let me = connections.filter(x => x.connectionId === senderConnectionId)[0].playerId;
+    let players = await getPlayers(roomId);
+    let me = (await getConnection(senderConnectionId)).playerId;
     let cardState: BackendCardState = {
       cardsById: {},
-      players: [...new Set(connections.map(x => x.playerId))],
+      players: players.map(x => x.playerId),
       me: me,
     };
     let cards = await getCards(roomId);
@@ -61,7 +68,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let connections = await getConnections(roomId);
   let otherConnectionIds = connections
     .map(x => x.connectionId)
-    .filter(id => id !== event.requestContext.connectionId);
+    .filter(id => id !== senderConnectionId);
 
   switch (action.type) {
     case "DROP_CARD":

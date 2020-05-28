@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { DatabaseCard, getConnections, putCards, putConnection } from "../common/database";
+import { DatabaseCard, getPlayers, putCards, putConnection, putPlayer } from "../common/database";
 
 let uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -36,23 +36,28 @@ let getInitialCards = (roomId: string) => {
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   let roomId = event.queryStringParameters['room-id'];
   let playerId = event.queryStringParameters['player-id'];
+  let connectionId = event.requestContext.connectionId;
 
-  let existingPlayerConnections = await getConnections(roomId);
+  let existingPlayers = await getPlayers(roomId);
 
   if(playerId === "NewPlayer") {
     playerId = uuidv4();
-  // } else if (existingPlayerConnections.Items.filter(c => c['playerId'] === playerId).length === 0) {
-  //   return { statusCode: 403, body: 'player id not in room' };
+    await putPlayer({
+      roomId: roomId,
+      playerId: playerId,
+    });
+  } else if (existingPlayers.filter(p => p.playerId === playerId).length === 0) {
+    return { statusCode: 403, body: 'player id not in room' };
   }
 
-  if (existingPlayerConnections.length === 0) {
+  let newRoom = existingPlayers.length === 0;
+  if (newRoom) {
     let cards = getInitialCards(roomId);
     await putCards(cards.slice(0,25));
     await putCards(cards.slice(25,50));
     await putCards(cards.slice(50));
   }
 
-  let connectionId = event.requestContext.connectionId;
   await putConnection({
     roomId: roomId,
     connectionId: connectionId,
