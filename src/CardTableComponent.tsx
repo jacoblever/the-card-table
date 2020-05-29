@@ -56,13 +56,17 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
     let playersInOrder = this.getPlayersInOrderWithMeFirst();
     return (
       <div className="table" id="card-table">
-        <div style={{float: "left"}}>
-          <OtherPlayerHandContainer playerId={playersInOrder[1]} />
-        </div>
+        {playersInOrder[1] && (
+          <div style={{float: "left"}}>
+            <OtherPlayerHandContainer playerId={playersInOrder[1]} />
+          </div>
+        )}
 
-        <div style={{float: "right"}}>
-          <OtherPlayerHandContainer playerId={playersInOrder[2]} />
-        </div>
+        {playersInOrder[2] && (
+          <div style={{float: "right"}}>
+            <OtherPlayerHandContainer playerId={playersInOrder[2]} />
+          </div>
+        )}
 
         {cards}
         <HandContainer playerId={playersInOrder[0]} />

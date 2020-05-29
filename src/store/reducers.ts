@@ -1,5 +1,13 @@
 import { Card, CardState } from "./state";
-import { ActionTypes, DROP_CARD, INITIAL_CARD_STATE, MOVE_CARD, PICK_UP_CARD, TURN_OVER_CARD } from "./actions";
+import {
+  ActionTypes,
+  DROP_CARD,
+  INITIAL_CARD_STATE,
+  MOVE_CARD,
+  PICK_UP_CARD,
+  PLAYERS_UPDATE,
+  TURN_OVER_CARD
+} from "./actions";
 
 export function CardsReducer(
   state: CardState,
@@ -16,6 +24,11 @@ export function CardsReducer(
   switch (action.type) {
     case INITIAL_CARD_STATE:
       return action.state;
+    case PLAYERS_UPDATE:
+      return {
+        ...state,
+        players: action.players,
+      };
     case PICK_UP_CARD:
     case MOVE_CARD:
     case DROP_CARD:

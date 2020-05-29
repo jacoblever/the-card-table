@@ -4,7 +4,7 @@ import {
   APIGatewayProxyEventBase,
   APIGatewayProxyResult
 } from "aws-lambda";
-import { pushMessage } from "../common/pushMessage";
+import { pushToConnection, pushToConnections } from "../common/pushMessage";
 import { BackendCardState, databaseToBackendCard } from "../common/cards";
 import {
   getCards,
@@ -14,24 +14,6 @@ import {
   storeCardDrop,
   storeCardFlip
 } from "../common/database";
-
-let pushToConnections = async (roomId: string, connectionIds: any[], event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, action: string) => {
-  const postCalls = connectionIds
-    .map(async (connectionId) => {
-      try {
-        await pushMessage(event.requestContext, connectionId, action)
-      } catch (e) {
-        if (e.statusCode === 410) {
-          console.log(`Found stale connection, deleting ${connectionId}`);
-          await markConnectionAsStale(connectionId);
-        } else {
-          throw e;
-        }
-      }
-    });
-
-  await Promise.all(postCalls);
-}
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   let senderConnectionId = event.requestContext.connectionId;
@@ -61,7 +43,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       type: "INITIAL_CARD_STATE",
       state: cardState,
     });
-    await pushMessage(event.requestContext, senderConnectionId, action);
+    await pushToConnection(event.requestContext, senderConnectionId, action);
     return { statusCode: 200, body: 'Data sent.' };
   }
 
@@ -87,7 +69,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       });
       break;
   }
-  await pushToConnections(roomId, otherConnectionIds, event, actionString);
+  await pushToConnections(event.requestContext, otherConnectionIds, actionString);
 
   return { statusCode: 200, body: 'Data sent.' };
 };

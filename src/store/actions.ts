@@ -7,6 +7,7 @@ export const TURN_OVER_CARD = "TURN_OVER_CARD";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
 export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
+export const PLAYERS_UPDATE = "PLAYERS_UPDATE";
 
 interface RemoteAction {
     remote: boolean;
@@ -45,17 +46,23 @@ export interface WsDisconnectAction {
 }
 
 export interface InitialCardStateAction {
-    type: typeof INITIAL_CARD_STATE;
-    state: CardState;
+  type: typeof INITIAL_CARD_STATE;
+  state: CardState;
+}
+
+export interface PlayersUpdateAction {
+  type: typeof PLAYERS_UPDATE;
+  players: string[];
 }
 
 export type ActionTypes = PickUpCardAction
-    | MoveCardAction
-    | DropCardAction
-    | TurnOverCardAction
-    | WsConnectAction
-    | WsDisconnectAction
-    | InitialCardStateAction;
+  | MoveCardAction
+  | DropCardAction
+  | TurnOverCardAction
+  | WsConnectAction
+  | WsDisconnectAction
+  | InitialCardStateAction
+  | PlayersUpdateAction;
 
 export function pickUpCard(cardId: string): ActionTypes {
   return {

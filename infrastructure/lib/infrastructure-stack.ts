@@ -109,13 +109,12 @@ export class InfrastructureStack extends cdk.Stack {
       f.addEnvironment("TABLE_NAME_PLAYERS", playersTable.tableName);
       f.addEnvironment("TABLE_NAME_CONNECTIONS", connectionsTable.tableName);
       f.addEnvironment("TABLE_NAME_CARDS", cardsTable.tableName);
+      f.addToRolePolicy(new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ["execute-api:ManageConnections"],
+        resources: [`arn:aws:execute-api:${this.awsRegion}:${this.awsAccountId}:${api.ref}/*`],
+      }));
     });
-
-    sendFunction.addToRolePolicy(new PolicyStatement({
-      effect: Effect.ALLOW,
-      actions: ["execute-api:ManageConnections"],
-      resources: [`arn:aws:execute-api:${this.awsRegion}:${this.awsAccountId}:${api.ref}/*`],
-    }));
 
     let connectIntegration = this.createIntegration("ConnectIntegration", api, "Connect Integration", this.awsRegion, connectFunction);
     let disconnectIntegration = this.createIntegration("DisconnectIntegration", api, "Disconnect Integration", this.awsRegion, disconnectFunction);

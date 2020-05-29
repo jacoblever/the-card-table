@@ -1,5 +1,14 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { DatabaseCard, getPlayers, putCards, putConnection, putPlayer } from "../common/database";
+import {
+  DatabaseCard,
+  DbPlayer,
+  getConnections,
+  getPlayers,
+  putCards,
+  putConnection,
+  putPlayer
+} from "../common/database";
+import { pushToConnections } from "../common/pushMessage";
 
 let uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -39,13 +48,19 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let connectionId = event.requestContext.connectionId;
 
   let existingPlayers = await getPlayers(roomId);
+  let existingConnections = await getConnections(roomId);
 
   if(playerId === "NewPlayer") {
     playerId = uuidv4();
-    await putPlayer({
+    let newPlayer: DbPlayer = {
       roomId: roomId,
       playerId: playerId,
-    });
+    };
+    await putPlayer(newPlayer);
+    await pushToConnections(event.requestContext, existingConnections.map(x => x.connectionId), JSON.stringify({
+      type: "PLAYERS_UPDATE",
+      players: [...existingPlayers, newPlayer].map(x => x.playerId),
+    }))
   } else if (existingPlayers.filter(p => p.playerId === playerId).length === 0) {
     return { statusCode: 403, body: 'player id not in room' };
   }

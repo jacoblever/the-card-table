@@ -3,7 +3,7 @@ import { DynamoDB } from 'aws-sdk';
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
-type DbPlayer = {
+export type DbPlayer = {
   /** partition key */
   roomId: string;
   /** sort key */

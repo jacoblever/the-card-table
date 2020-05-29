@@ -6,6 +6,7 @@ import {
   ActionTypes,
   DROP_CARD,
   INITIAL_CARD_STATE,
+  PLAYERS_UPDATE,
   TURN_OVER_CARD,
   turnOverCard,
   WS_CONNECT,
@@ -60,6 +61,9 @@ const socketMiddleware = () => {
         break;
       case INITIAL_CARD_STATE:
         Cookies.set(`playerId-${getRoomId()}`, message.state.me)
+        store.dispatch(message);
+        break;
+      case PLAYERS_UPDATE:
         store.dispatch(message);
         break;
       default:
