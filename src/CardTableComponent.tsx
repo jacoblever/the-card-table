@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 
 import './CardTableComponent.css';
 import { CardContainer } from './CardContainer';
@@ -21,11 +21,11 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
     this.state = {}
   }
 
-  componentDidMount() {
+  componentDidMount(): void {
     this.props.onMount();
   }
 
-  componentWillUnmount() {
+  componentWillUnmount(): void {
     this.props.onUnmount();
   }
 
@@ -40,9 +40,44 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
     return result;
   }
 
-  render() {
-    const cards = []
+  private renderOtherPlayers(): JSX.Element[] {
+    const playersInOrder = this.getPlayersInOrderWithMeFirst();
+    if(playersInOrder.length < 2) {
+      return [];
+    }
+    const tableRect = document.getElementById("card-table")!.getBoundingClientRect();
+    const tableWidth = tableRect.width;
+    const tableHeight = tableRect.height;
+    const elements: JSX.Element[] = [];
+    for (let i = 1; i < playersInOrder.length; i++) {
+      let playerPositionOnPerimeter = (2*tableHeight + tableWidth) * i/playersInOrder.length;
+      let style: CSSProperties = {
+        position: "absolute",
+      };
+      if(playerPositionOnPerimeter <= tableHeight) {
+        let marginTop = tableHeight - playerPositionOnPerimeter;
+        style.marginTop = `${marginTop}px`;
+      } else if (playerPositionOnPerimeter < tableHeight + tableWidth) {
+        const proportionAlongTop = (playerPositionOnPerimeter - tableHeight)/tableWidth;
+        style.marginLeft = `${proportionAlongTop*100}%`;
+      } else {
+        let marginTop = playerPositionOnPerimeter - tableHeight - tableWidth;
+        style.marginTop = `${marginTop}px`;
+        style.right = 0;
+      }
 
+      elements.push(
+        <div key={i} style={style}>
+          <OtherPlayerHandContainer playerId={playersInOrder[i]} />
+        </div>
+      );
+    }
+
+    return elements;
+  }
+
+  private renderCards(): JSX.Element[] {
+    const cards = [];
     for (const card of this.props.cards) {
       cards.push(
         <CardContainer
@@ -52,24 +87,18 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
         />
       )
     }
+    return cards;
+  }
 
+  render() {
     let playersInOrder = this.getPlayersInOrderWithMeFirst();
     return (
       <div className="table" id="card-table">
-        {playersInOrder[1] && (
-          <div style={{float: "left"}}>
-            <OtherPlayerHandContainer playerId={playersInOrder[1]} />
-          </div>
-        )}
+        {this.renderOtherPlayers()}
 
-        {playersInOrder[2] && (
-          <div style={{float: "right"}}>
-            <OtherPlayerHandContainer playerId={playersInOrder[2]} />
-          </div>
-        )}
+        {this.renderCards()}
 
-        {cards}
-        <HandContainer playerId={playersInOrder[0]} />
+        <HandContainer playerId={this.props.me} />
       </div>
     );
   }
