@@ -119,12 +119,19 @@ export class CardComponent extends React.Component<CardProps, CardState> {
         className="card"
         ref={this.domElement}
         style={this.style()}
-        onDoubleClick={this.props.onClick}
+        onDoubleClick={this.onDoubleClick()}
       >
         <svg width="100%" viewBox="0 0 169.075 244.64">
           <use xlinkHref={`#${this.cardName()}`} />
         </svg>
       </div>
     );
+  }
+
+  private onDoubleClick() {
+    if(!this.props.movable) {
+      return;
+    }
+    return this.props.onClick;
   }
 }
