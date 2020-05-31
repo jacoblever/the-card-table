@@ -68,6 +68,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       roomId: roomId,
       playerId: playerId,
       name: name,
+      playOrder: existingPlayers.length,
     };
     await putPlayer(newPlayer);
     await pushToConnections(event.requestContext, existingConnections.map(x => x.connectionId),{

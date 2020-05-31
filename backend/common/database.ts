@@ -9,6 +9,7 @@ export type DbPlayer = {
   /** sort key */
   playerId: string;
   name: string;
+  playOrder: number;
 };
 
 type DbConnection = {
@@ -51,13 +52,16 @@ export const getPlayers = async (roomId: string) => {
   if(!items){
     return [];
   }
-  return items.map<DbPlayer>(x => {
+  let dbPlayers = items.map<DbPlayer>(x => {
     return {
       roomId: x['roomId'],
       playerId: x['playerId'],
       name: x['name'],
+      playOrder: x['playOrder'],
     };
   });
+  dbPlayers.sort(x => x.playOrder);
+  return dbPlayers;
 };
 
 export const putConnection = async (connection: DbConnection) => {
