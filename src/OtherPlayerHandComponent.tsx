@@ -4,11 +4,11 @@ import interact from 'interactjs'
 import '@interactjs/types'
 
 import './OtherPlayerHandComponent.css';
-import { Card } from "./store/state";
+import { Card, Player } from "./store/state";
 import { CardContainer } from "./CardContainer";
 
 type Props = {
-  playerId: string,
+  player: Player,
   cards: Card[],
 }
 
@@ -63,7 +63,7 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
 
   render() {
     return (
-      <div id={this.props.playerId} className="other-player-hand" ref={this.domElement}>
+      <div id={this.props.player.id} className="other-player-hand" ref={this.domElement}>
         {this.props.cards.map(card =>
           <CardContainer
             id={card.id}
@@ -72,6 +72,7 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
             movable={false}
           />
         )}
+        <span className="other-player-hand__name">{this.props.player.name}</span>
       </div>
     );
   }

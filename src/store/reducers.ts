@@ -4,6 +4,7 @@ import {
   DROP_CARD,
   INITIAL_CARD_STATE,
   MOVE_CARD,
+  NAME_CHANGE,
   PICK_UP_CARD,
   PLAYERS_UPDATE,
   TURN_OVER_CARD
@@ -28,6 +29,14 @@ export function CardsReducer(
       return {
         ...state,
         players: action.players,
+      };
+    case NAME_CHANGE:
+      let players = [...state.players];
+      let player = players.filter(x => x.id === action.playerId)[0];
+      player.name = action.name;
+      return {
+        ...state,
+        players: players,
       };
     case PICK_UP_CARD:
     case MOVE_CARD:

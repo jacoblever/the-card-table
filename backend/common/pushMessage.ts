@@ -1,11 +1,12 @@
 import { APIGatewayEventDefaultAuthorizerContext, APIGatewayEventRequestContextWithAuthorizer } from "aws-lambda";
 import { ApiGatewayManagementApi } from 'aws-sdk';
 import { markConnectionAsStale } from "./database";
+import { BackendActionTypes } from "./backend_actions";
 
 export const pushToConnection = async (
   requestContext: APIGatewayEventRequestContextWithAuthorizer<APIGatewayEventDefaultAuthorizerContext>,
   connectionId: string,
-  postData: string,
+  action: BackendActionTypes,
   ) => {
   const apigwManagementApi = new ApiGatewayManagementApi({
     apiVersion: '2018-11-29',
@@ -14,14 +15,14 @@ export const pushToConnection = async (
 
   await apigwManagementApi.postToConnection({
     ConnectionId: connectionId,
-    Data: postData,
+    Data: JSON.stringify(action),
   }).promise();
 };
 
 export const pushToConnections = async (
   requestContext: APIGatewayEventRequestContextWithAuthorizer<APIGatewayEventDefaultAuthorizerContext>,
   connectionIds: string[],
-  action: string,
+  action: BackendActionTypes,
   ) => {
   const postCalls = connectionIds
     .map(async (connectionId) => {

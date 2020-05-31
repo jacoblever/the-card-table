@@ -8,6 +8,7 @@ export type DbPlayer = {
   roomId: string;
   /** sort key */
   playerId: string;
+  name: string;
 };
 
 type DbConnection = {
@@ -54,6 +55,7 @@ export const getPlayers = async (roomId: string) => {
     return {
       roomId: x['roomId'],
       playerId: x['playerId'],
+      name: x['name'],
     };
   });
 };
@@ -208,6 +210,29 @@ export const storeCardFlip = async (cardFlip: CardFlip) => {
     UpdateExpression: 'add flipCount :one',
     ExpressionAttributeValues: {
       ':one': 1,
+    }
+  }).promise();
+};
+
+type RenamePlayer = {
+  roomId: string;
+  playerId: string;
+  name: string;
+}
+
+export const renamePlayer = async (renamePlayer: RenamePlayer) => {
+  await ddb.update({
+    TableName: getLambdaEnv().PlayersTableName,
+    Key: {
+      roomId: renamePlayer.roomId,
+      playerId: renamePlayer.playerId,
+    },
+    UpdateExpression: 'set #n = :newName',
+    ExpressionAttributeNames: {
+      '#n': 'name'
+    },
+    ExpressionAttributeValues: {
+      ':newName': renamePlayer.name,
     }
   }).promise();
 };

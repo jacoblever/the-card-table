@@ -6,6 +6,7 @@ import {
   ActionTypes,
   DROP_CARD,
   INITIAL_CARD_STATE,
+  NAME_CHANGE,
   PLAYERS_UPDATE,
   TURN_OVER_CARD,
   turnOverCard,
@@ -20,7 +21,9 @@ function getRoomId() {
 function getWebSocketPath() {
   let roomId = getRoomId();
   let playerId = Cookies.get(`playerId-${roomId}`) ?? "NewPlayer";
-  return `wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod?room-id=${roomId}&player-id=${playerId}`;
+  let playerName = Cookies.get("default-name") ?? "";
+
+  return `wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod?room-id=${roomId}&player-id=${playerId}&player-name=${playerName}`;
 }
 
 const socketMiddleware = () => {
@@ -92,6 +95,7 @@ const socketMiddleware = () => {
         break;
       case DROP_CARD:
       case TURN_OVER_CARD:
+      case NAME_CHANGE:
         if (socket === null || socket.readyState !== WebSocket.OPEN || action.remote) {
           break;
         }

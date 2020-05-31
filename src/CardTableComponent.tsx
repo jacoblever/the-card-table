@@ -2,13 +2,13 @@ import React, { CSSProperties } from 'react';
 
 import './CardTableComponent.css';
 import { CardContainer } from './CardContainer';
-import { Card } from './store/state';
+import { Card, Player } from './store/state';
 import HandContainer from "./HandContainer";
 import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
 
 type CardTableProps = {
   cards: Card[],
-  players: string[],
+  players: Player[],
   me: string,
   
   onMount: () => void,
@@ -29,10 +29,10 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
     this.props.onUnmount();
   }
 
-  private getPlayersInOrderWithMeFirst(): string[] {
+  private getPlayersInOrderWithMeFirst(): Player[] {
     let players = this.props.players;
     let result = [];
-    let index = players.findIndex(x => x === this.props.me);
+    let index = players.findIndex(x => x.id === this.props.me);
     for (let i = 0; i < players.length; i++) {
       let indexToAdd = (i + index) % players.length;
       result.push(players[indexToAdd]);
@@ -68,7 +68,7 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
 
       elements.push(
         <div key={i} style={style}>
-          <OtherPlayerHandContainer playerId={playersInOrder[i]} />
+          <OtherPlayerHandContainer player={playersInOrder[i]} />
         </div>
       );
     }
@@ -91,14 +91,13 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
   }
 
   render() {
-    let playersInOrder = this.getPlayersInOrderWithMeFirst();
     return (
       <div className="table" id="card-table">
         {this.renderOtherPlayers()}
 
         {this.renderCards()}
 
-        <HandContainer playerId={this.props.me} />
+        <HandContainer player={this.getPlayersInOrderWithMeFirst()[0]} />
       </div>
     );
   }

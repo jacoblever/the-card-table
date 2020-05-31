@@ -6,8 +6,13 @@ export interface AppState {
 
 export interface CardState {
   cardsById: { [key: string]: Card; };
-  players: string[];
+  players: Player[];
   me: string;
+}
+
+export interface Player {
+  id: string;
+  name: string;
 }
 
 export interface Card {

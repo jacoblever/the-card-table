@@ -6,6 +6,10 @@
     margin: 2px 0;
 }
 
+.hand-container__name {
+    position: absolute;
+}
+
 .hand {
     height: 110%;
     width: 90%;

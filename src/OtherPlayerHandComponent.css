@@ -4,6 +4,14 @@
     outline: 1px solid black;
 }
 
+.other-player-hand__name {
+    position: absolute;
+    z-index: 1000000;
+    margin: 5px;
+    font-size: 130%;
+    color: white;
+}
+
 .other-player-hand.drop-active {
     outline: 2px dashed #aaa;
 }

@@ -1,18 +1,18 @@
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux';
 
-import { AppState } from "./store/state";
+import { AppState, Player } from "./store/state";
 import { ActionTypes } from './store/actions';
 import { OtherPlayerHandComponent } from "./OtherPlayerHandComponent";
 
 type Props = {
-  playerId: string,
+  player: Player,
 }
 
 const mapStateToProps = (state: AppState, ownProps: Props) => ({
   cards: Object.keys(state.cards.cardsById)
     .map(cardId => state.cards.cardsById[cardId])
-    .filter(card => card.heldBy === ownProps.playerId),
+    .filter(card => card.heldBy === ownProps.player.id),
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) => ({

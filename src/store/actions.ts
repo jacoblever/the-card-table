@@ -1,4 +1,4 @@
-import { CardOwner, CardState, Coordinates } from "./state";
+import { CardOwner, CardState, Coordinates, Player } from "./state";
 
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
@@ -8,6 +8,7 @@ export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
 export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const PLAYERS_UPDATE = "PLAYERS_UPDATE";
+export const NAME_CHANGE = "NAME_CHANGE";
 
 interface RemoteAction {
     remote: boolean;
@@ -52,7 +53,13 @@ export interface InitialCardStateAction {
 
 export interface PlayersUpdateAction {
   type: typeof PLAYERS_UPDATE;
-  players: string[];
+  players: Player[];
+}
+
+export interface NameChangeAction extends RemoteAction{
+  type: typeof NAME_CHANGE;
+  playerId: string;
+  name: string;
 }
 
 export type ActionTypes = PickUpCardAction
@@ -62,7 +69,8 @@ export type ActionTypes = PickUpCardAction
   | WsConnectAction
   | WsDisconnectAction
   | InitialCardStateAction
-  | PlayersUpdateAction;
+  | PlayersUpdateAction
+  | NameChangeAction;
 
 export function pickUpCard(cardId: string): ActionTypes {
   return {
@@ -109,5 +117,14 @@ export function wsConnect(): ActionTypes {
 export function wsDisconnect(): ActionTypes {
   return {
     type: WS_DISCONNECT,
+  };
+}
+
+export function nameChange(playerId: string, name: string): ActionTypes {
+  return {
+    type: NAME_CHANGE,
+    remote: false,
+    playerId: playerId,
+    name: name,
   };
 }

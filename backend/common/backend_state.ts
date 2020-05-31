@@ -1,4 +1,4 @@
-import { DatabaseCard } from "./database";
+import { DatabaseCard, DbPlayer } from "./database";
 
 export type BackendCard = {
   id: string;
@@ -25,6 +25,19 @@ export const databaseToBackendCard = (card: DatabaseCard) => {
 
 export interface BackendCardState {
   cardsById: { [key: string]: BackendCard; };
-  players: string[];
+  players: BackendPlayer[];
   me: string;
+}
+
+export interface BackendPlayer {
+  id: string;
+  name: string;
+}
+
+export const databaseToBackendPlayer = (player: DbPlayer) => {
+  let backendPlayer: BackendPlayer = {
+    id: player.playerId,
+    name: player.name,
+  };
+  return backendPlayer;
 }
