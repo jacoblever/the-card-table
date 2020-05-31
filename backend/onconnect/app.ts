@@ -33,7 +33,7 @@ let getInitialCards = (roomId: string) => {
         suit: suit,
         number: i,
         heldBy: null,
-        location: [300, 150],
+        location: [200, 150],
         zIndex: 0,
       });
     }
