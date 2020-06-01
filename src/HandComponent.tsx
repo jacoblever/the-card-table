@@ -1,4 +1,4 @@
-import React, { FocusEvent, KeyboardEvent } from 'react';
+import React, { KeyboardEvent } from 'react';
 
 import interact from 'interactjs'
 import '@interactjs/types'

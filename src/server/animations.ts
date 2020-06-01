@@ -28,29 +28,48 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZInde
   let endInOriginalOwnersFrame = new LocationTransformer(endInFinalOwnersFrame, nowHeldBy)
     .transformTo(card.heldBy);
 
-  let animationStep = () => {
-    setTimeout(() => {
-      if(stepNumber === 1) {
-        dispatch(pickUpCard(card.id));
-      }
-
-      if (stepPercent * stepNumber <= 1) {
-        let nextLocation = Elementwise.map(i => {
-          let start = startInOriginalOwnersFrame;
-          let end = endInOriginalOwnersFrame;
-          return start[i] + stepPercent * stepNumber * (end[i] - start[i]);
-        });
-        dispatch(moveCard(card.id, nextLocation));
-
-        if(stepPercent * stepNumber === 1) {
-          dispatch(dropCard(card.id, endInFinalOwnersFrame, finalZIndex, nowHeldBy, true));
-        }
-
-        stepNumber += 1;
-        window.requestAnimationFrame(animationStep);
-      }
-    }, 1000 / framesPerSecond);
+  let dispatchEndState = () => {
+    dispatch(dropCard(card.id, endInFinalOwnersFrame, finalZIndex, nowHeldBy, true));
   };
 
-  window.requestAnimationFrame(animationStep);
+  let requestAnimationFrameWithOutOfFocusFallback = (func: () => void) => {
+    let handlerRun = false;
+    let handler = () => {
+      handlerRun = true;
+      func();
+    };
+    let requestId = window.requestAnimationFrame(handler);
+    setTimeout(() => {
+      if(!handlerRun) {
+        window.cancelAnimationFrame(requestId);
+        dispatchEndState();
+      }
+    }, 100);
+  };
+
+  let animationStep = () => {
+    if(stepNumber === 1) {
+      dispatch(pickUpCard(card.id));
+    }
+
+    if (stepPercent * stepNumber <= 1) {
+      let nextLocation = Elementwise.map(i => {
+        let start = startInOriginalOwnersFrame;
+        let end = endInOriginalOwnersFrame;
+        return start[i] + stepPercent * stepNumber * (end[i] - start[i]);
+      });
+      dispatch(moveCard(card.id, nextLocation));
+
+      if(stepPercent * stepNumber === 1) {
+        dispatchEndState();
+      }
+
+      stepNumber += 1;
+      setTimeout(() => {
+        requestAnimationFrameWithOutOfFocusFallback(animationStep);
+      }, 1000 / framesPerSecond);
+    }
+  };
+
+  requestAnimationFrameWithOutOfFocusFallback(animationStep);
 };
