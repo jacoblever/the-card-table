@@ -67,7 +67,7 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
       }
 
       elements.push(
-        <div key={i} style={style}>
+        <div key={playersInOrder[i].id} style={style}>
           <OtherPlayerHandContainer player={playersInOrder[i]} />
         </div>
       );
