@@ -17,6 +17,7 @@ interface RemoteAction {
 export interface PickUpCardAction extends RemoteAction {
     type: typeof PICK_UP_CARD;
     cardId: string;
+    ensureIdentityStaysHidden: boolean;
 }
 
 export interface MoveCardAction extends RemoteAction {
@@ -72,11 +73,12 @@ export type ActionTypes = PickUpCardAction
   | PlayersUpdateAction
   | NameChangeAction;
 
-export function pickUpCard(cardId: string): ActionTypes {
+export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): ActionTypes {
   return {
     type: PICK_UP_CARD,
     remote: false,
     cardId: cardId,
+    ensureIdentityStaysHidden: ensureIdentityStaysHidden,
   };
 }
 

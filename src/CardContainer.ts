@@ -16,7 +16,7 @@ const mapStateToProps = (state: AppState, ownProps: Props) => {
   let card = state.cards.cardsById[ownProps.id];
   return {
     heldBy: card.heldBy,
-    faceUp: ownProps.forceFaceDown ? false : card.faceUp,
+    faceUp: ownProps.forceFaceDown || card.forceFaceDown ? false : card.faceUp,
     suit: card.suit,
     number: card.number,
     location: card.location,

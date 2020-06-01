@@ -80,6 +80,7 @@ function CardReducer(
       return {
         ...state,
         zIndex: maxZIndexGetter() + 1,
+        forceFaceDown: action.ensureIdentityStaysHidden,
       }
     case MOVE_CARD:
       return {
@@ -92,6 +93,7 @@ function CardReducer(
         heldBy: action.nowHeldBy,
         location: action.location,
         zIndex: action.zIndex,
+        forceFaceDown: false,
       };
     case TURN_OVER_CARD:
       return {

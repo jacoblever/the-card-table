@@ -22,6 +22,9 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZInde
   let stepPercent = 1 / ((duration / 1000) * framesPerSecond);
   let stepNumber = 1;
 
+  let beingMovedToPrivateArea = ![CardOwnerTable, me].includes(nowHeldBy);
+  let cardIdentitySecret = !card.faceUp || ![CardOwnerTable, me].includes(card.heldBy);
+
   let startInOriginalOwnersFrame = card.location;
   let endInFinalOwnersFrame = getEndLocationInFinalOwnersFrame(card, endLocation, nowHeldBy, me);
 
@@ -49,7 +52,7 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZInde
 
   let animationStep = () => {
     if(stepNumber === 1) {
-      dispatch(pickUpCard(card.id));
+      dispatch(pickUpCard(card.id, cardIdentitySecret && beingMovedToPrivateArea));
     }
 
     if (stepPercent * stepNumber <= 1) {

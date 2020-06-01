@@ -23,6 +23,9 @@ export interface Card {
   heldBy: CardOwner;
   location: Coordinates;
   zIndex: number;
+
+  /** Not persisted on the backend */
+  forceFaceDown: boolean;
 }
 
 export type CardOwner = string | typeof CardOwnerTable
