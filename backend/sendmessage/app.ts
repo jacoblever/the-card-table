@@ -2,10 +2,10 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { pushToConnection, pushToConnections } from "../common/pushMessage";
 import {
   BackendCardState,
-  databaseToBackendCard,
-  databaseToBackendPlayer
+  databaseToBackendCard
 } from "../common/backend_state";
 import {
+  deleteConnection,
   getCards,
   getConnection,
   getConnections,
@@ -19,10 +19,9 @@ import {
   BACKEND_GET_INITIAL_STATE,
   BACKEND_INITIAL_CARD_STATE,
   BACKEND_NAME_CHANGE,
-  BACKEND_PLAYERS_UPDATE,
   BACKEND_TURN_OVER_CARD,
   BackendActionTypes,
-  BackendInitialCardStateAction
+  BackendInitialCardStateAction, backendPlayersUpdate
 } from "../common/backend_actions";
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -33,12 +32,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const roomId = body.roomId as string;
   const action: BackendActionTypes = JSON.parse(actionString);
 
+  let connections = await getConnections(roomId);
+
   if(action.type === BACKEND_GET_INITIAL_STATE) {
     let players = await getPlayers(roomId);
     let me = (await getConnection(senderConnectionId)).playerId;
     let cardState: BackendCardState = {
       cardsById: {},
-      players: players.map(databaseToBackendPlayer),
+      players: backendPlayersUpdate(await getPlayers(roomId), connections).players,
       me: me,
     };
     let cards = await getCards(roomId);
@@ -80,20 +81,29 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
         playerId: action.playerId,
         name: action.name,
       });
-      actionToSend = {
-        type: BACKEND_PLAYERS_UPDATE,
-        players: (await getPlayers(roomId)).map(databaseToBackendPlayer),
-      }
+      actionToSend = backendPlayersUpdate(await getPlayers(roomId), connections);
       break;
     default:
       throw new Error(`Action type ${action.type} not handled by backend`);
   }
 
-  let connections = await getConnections(roomId);
   let otherConnectionIds = connections
     .map(x => x.connectionId)
     .filter(id => id !== senderConnectionId);
-  await pushToConnections(event.requestContext, otherConnectionIds, actionToSend);
 
+  let staleConnectionIds = await pushToConnections(event.requestContext, otherConnectionIds, actionToSend);
+
+  if(staleConnectionIds.length > 0) {
+    staleConnectionIds.forEach(x => {
+      deleteConnection(roomId, x);
+    });
+
+    let connectionsLeft = connections.filter(x => !staleConnectionIds.includes(x.connectionId));
+    await pushToConnections(
+      event.requestContext,
+      connectionsLeft.map(x => x.connectionId),
+      backendPlayersUpdate(await getPlayers(roomId), connectionsLeft),
+    );
+  }
   return { statusCode: 200, body: 'OK' };
 };

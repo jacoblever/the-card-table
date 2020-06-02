@@ -12,7 +12,7 @@ export type DbPlayer = {
   playOrder: number;
 };
 
-type DbConnection = {
+export type DbConnection = {
   /** partition key */
   connectionId: string;
   roomId: string;
@@ -71,7 +71,7 @@ export const putConnection = async (connection: DbConnection) => {
   }).promise();
 };
 
-export const getConnection = async (connectionId: string) => {
+export async function getConnection(connectionId: string): DbConnection | null {
   let result = await ddb.query({
     TableName: getLambdaEnv().ConnectionsTableName,
     IndexName: 'findByConnectionId',
@@ -86,12 +86,11 @@ export const getConnection = async (connectionId: string) => {
     return null;
   }
   let item = items[0];
-  let connection: DbConnection = {
+  return {
     connectionId: item['connectionId'],
     roomId: item['roomId'],
     playerId: item['playerId'],
   };
-  return connection;
 };
 
 export const getConnections = async (roomId: string) => {
@@ -116,15 +115,11 @@ export const getConnections = async (roomId: string) => {
   });
 };
 
-export const markConnectionAsStale = async (connectionId: string) => {
-  let connection = await getConnection(connectionId);
-  if(connection === null) {
-    return;
-  }
+export const deleteConnection = async (roomId: string, connectionId: string) => {
   await ddb.delete({
     TableName: getLambdaEnv().ConnectionsTableName,
     Key: {
-      roomId: connection.roomId,
+      roomId: roomId,
       connectionId: connectionId,
     },
   }).promise();

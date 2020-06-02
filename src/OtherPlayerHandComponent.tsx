@@ -6,6 +6,7 @@ import '@interactjs/types'
 import './OtherPlayerHandComponent.css';
 import { Card, Player } from "./store/state";
 import { CardContainer } from "./CardContainer";
+import OfflineIcon from './icons/OfflineIcon.svg'
 
 type Props = {
   player: Player,
@@ -61,9 +62,20 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
       });
   }
 
+  private renderOnlineStatus(): JSX.Element {
+    if(!this.props.player.online) {
+      return <img src={OfflineIcon} alt="Offline" width="30px" />;
+    }
+    return <span />;
+  }
+
   render() {
     return (
       <div id={this.props.player.id} className="other-player-hand" ref={this.domElement}>
+        <div className="other-player-hand__name">
+          <span>{this.props.player.name}</span>
+          {this.renderOnlineStatus()}
+        </div>
         {this.props.cards.map(card =>
           <CardContainer
             id={card.id}
@@ -72,7 +84,6 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
             movable={false}
           />
         )}
-        <span className="other-player-hand__name">{this.props.player.name}</span>
       </div>
     );
   }

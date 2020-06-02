@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
   DatabaseCard,
   DbPlayer,
+  deleteConnection,
   getConnections,
   getPlayers,
   putCards,
@@ -10,8 +11,7 @@ import {
 } from "../common/database";
 import { pushToConnections } from "../common/pushMessage";
 import { playerNames } from "./playerNames";
-import { BACKEND_PLAYERS_UPDATE } from "../common/backend_actions";
-import { databaseToBackendPlayer } from "../common/backend_state";
+import { backendPlayersUpdate } from "../common/backend_actions";
 
 let uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -61,6 +61,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let existingPlayers = await getPlayers(roomId);
   let existingConnections = await getConnections(roomId);
 
+  let players: DbPlayer[] = existingPlayers;
   if(playerId === "NewPlayer") {
     playerId = uuidv4();
     let name = playerName !== "" ? playerName : getPlayerNewName(existingPlayers);
@@ -71,10 +72,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       playOrder: existingPlayers.length,
     };
     await putPlayer(newPlayer);
-    await pushToConnections(event.requestContext, existingConnections.map(x => x.connectionId),{
-      type: BACKEND_PLAYERS_UPDATE,
-      players: [...existingPlayers, newPlayer].map(databaseToBackendPlayer),
-    });
+    players = [...existingPlayers, newPlayer];
   } else if (existingPlayers.filter(p => p.playerId === playerId).length === 0) {
     return { statusCode: 403, body: 'player id not in room' };
   }
@@ -87,11 +85,32 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await putCards(cards.slice(50));
   }
 
-  await putConnection({
+  let newConnection = {
     roomId: roomId,
     connectionId: connectionId,
     playerId: playerId,
-  })
+  };
+  await putConnection(newConnection);
 
+  let connections = [...existingConnections, newConnection];
+
+  let staleConnectionIds = await pushToConnections(
+    event.requestContext,
+    existingConnections.map(x => x.connectionId),
+    backendPlayersUpdate(existingPlayers, connections),
+  );
+
+  if(staleConnectionIds.length > 0) {
+    staleConnectionIds.forEach(x => {
+      deleteConnection(roomId, x);
+    });
+
+    let connectionsLeft = connections.filter(x => !staleConnectionIds.includes(x.connectionId));
+    await pushToConnections(
+      event.requestContext,
+      connectionsLeft.map(x => x.connectionId),
+      backendPlayersUpdate(await getPlayers(roomId), connectionsLeft),
+    );
+  }
   return { statusCode: 200, body: 'Connected.' };
 };

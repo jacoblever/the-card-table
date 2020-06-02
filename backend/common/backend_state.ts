@@ -32,12 +32,14 @@ export interface BackendCardState {
 export interface BackendPlayer {
   id: string;
   name: string;
+  online: boolean;
 }
 
-export const databaseToBackendPlayer = (player: DbPlayer) => {
+export const databaseToBackendPlayer = (player: DbPlayer, online: boolean) => {
   let backendPlayer: BackendPlayer = {
     id: player.playerId,
     name: player.name,
+    online: online,
   };
   return backendPlayer;
 }

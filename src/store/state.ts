@@ -13,6 +13,7 @@ export interface CardState {
 export interface Player {
   id: string;
   name: string;
+  online: boolean;
 }
 
 export interface Card {

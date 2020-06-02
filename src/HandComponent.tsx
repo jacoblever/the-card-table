@@ -5,7 +5,7 @@ import '@interactjs/types'
 import Cookies from "js-cookie";
 
 import './HandComponent.css';
-import EditIcon from './EditIcon.svg'
+import EditIcon from './icons/EditIcon.svg'
 import { Card, Player } from "./store/state";
 import { CardContainer } from "./CardContainer";
 

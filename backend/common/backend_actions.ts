@@ -1,4 +1,5 @@
-import { BackendCardState, BackendPlayer } from "./backend_state";
+import { BackendCardState, BackendPlayer, databaseToBackendPlayer } from "./backend_state";
+import { DbConnection, DbPlayer } from "./database";
 
 export const BACKEND_DROP_CARD = "DROP_CARD";
 export const BACKEND_TURN_OVER_CARD = "TURN_OVER_CARD";
@@ -38,6 +39,16 @@ export interface BackendNameChangeAction {
   type: typeof BACKEND_NAME_CHANGE;
   playerId: string;
   name: string;
+}
+
+export function backendPlayersUpdate(players: DbPlayer[], connections: DbConnection[]): BackendPlayersUpdateAction {
+  return {
+    type: BACKEND_PLAYERS_UPDATE,
+    players: players.map(player => {
+      let online = connections.filter(x => x.playerId === player.playerId).length > 0;
+      return databaseToBackendPlayer(player, online);
+    }),
+  };
 }
 
 export type BackendActionTypes = BackendDropCardAction
