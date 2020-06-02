@@ -46,22 +46,24 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
       return [];
     }
     const tableRect = document.getElementById("card-table")!.getBoundingClientRect();
+    const handWidth = 50;
     const tableWidth = tableRect.width;
+    const effectiveTableWidth = tableRect.width - handWidth;
     const tableHeight = tableRect.height;
     const elements: JSX.Element[] = [];
     for (let i = 1; i < playersInOrder.length; i++) {
-      let playerPositionOnPerimeter = (2*tableHeight + tableWidth) * i/playersInOrder.length;
+      let playerPositionOnPerimeter = (2*tableHeight + effectiveTableWidth) * i/playersInOrder.length;
       let style: CSSProperties = {
         position: "absolute",
       };
       if(playerPositionOnPerimeter <= tableHeight) {
         let marginTop = tableHeight - playerPositionOnPerimeter;
         style.marginTop = `${marginTop}px`;
-      } else if (playerPositionOnPerimeter < tableHeight + tableWidth) {
+      } else if (playerPositionOnPerimeter < tableHeight + effectiveTableWidth) {
         const proportionAlongTop = (playerPositionOnPerimeter - tableHeight)/tableWidth;
         style.marginLeft = `${proportionAlongTop*100}%`;
       } else {
-        let marginTop = playerPositionOnPerimeter - tableHeight - tableWidth;
+        let marginTop = playerPositionOnPerimeter - tableHeight - effectiveTableWidth;
         style.marginTop = `${marginTop}px`;
         style.right = 0;
       }
