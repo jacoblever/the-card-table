@@ -22,7 +22,7 @@ export async function pushToConnections(
   requestContext: APIGatewayEventRequestContextWithAuthorizer<APIGatewayEventDefaultAuthorizerContext>,
   connectionIds: string[],
   action: BackendActionTypes,
-  ): string[] {
+  ): Promise<string[]> {
   let staleConnectionIds: string[] = []
   const postCalls = connectionIds
     .map(async (connectionId) => {

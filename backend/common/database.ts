@@ -71,7 +71,7 @@ export const putConnection = async (connection: DbConnection) => {
   }).promise();
 };
 
-export async function getConnection(connectionId: string): DbConnection | null {
+export async function getConnection(connectionId: string): Promise<DbConnection | null> {
   let result = await ddb.query({
     TableName: getLambdaEnv().ConnectionsTableName,
     IndexName: 'findByConnectionId',
@@ -233,5 +233,15 @@ export const renamePlayer = async (renamePlayer: RenamePlayer) => {
     ExpressionAttributeValues: {
       ':newName': renamePlayer.name,
     }
+  }).promise();
+};
+
+export const deletePlayer = async (roomId: string, playerId: string) => {
+  await ddb.delete({
+    TableName: getLambdaEnv().PlayersTableName,
+    Key: {
+      roomId: roomId,
+      playerId: playerId,
+    },
   }).promise();
 };

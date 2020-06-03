@@ -6,6 +6,7 @@ import {
   ActionTypes,
   DROP_CARD,
   INITIAL_CARD_STATE,
+  KICK_PLAYER,
   NAME_CHANGE,
   PLAYERS_UPDATE,
   TURN_OVER_CARD,
@@ -96,6 +97,7 @@ const socketMiddleware = () => {
       case DROP_CARD:
       case TURN_OVER_CARD:
       case NAME_CHANGE:
+      case KICK_PLAYER:
         if (socket === null || socket.readyState !== WebSocket.OPEN || action.remote) {
           break;
         }

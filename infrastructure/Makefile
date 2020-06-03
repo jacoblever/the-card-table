@@ -1,4 +1,4 @@
 deploy:
 	npm run build
 	cdk deploy
-	rm -rf ../backend/*/build/
+	#rm -rf ../backend/*/build/

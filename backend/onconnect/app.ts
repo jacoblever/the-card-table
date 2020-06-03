@@ -97,7 +97,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let staleConnectionIds = await pushToConnections(
     event.requestContext,
     existingConnections.map(x => x.connectionId),
-    backendPlayersUpdate(existingPlayers, connections),
+    backendPlayersUpdate(players, connections),
   );
 
   if(staleConnectionIds.length > 0) {

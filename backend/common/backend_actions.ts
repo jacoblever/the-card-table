@@ -7,6 +7,7 @@ export const BACKEND_GET_INITIAL_STATE = "GET_INITIAL_STATE";
 export const BACKEND_INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const BACKEND_PLAYERS_UPDATE = "PLAYERS_UPDATE";
 export const BACKEND_NAME_CHANGE = "NAME_CHANGE";
+export const BACKEND_KICK_PLAYER = "KICK_PLAYER";
 
 export interface BackendDropCardAction {
   type: typeof BACKEND_DROP_CARD;
@@ -14,6 +15,7 @@ export interface BackendDropCardAction {
   location: [number, number];
   zIndex: number;
   nowHeldBy: string | null;
+  remote: true,
 }
 
 export interface BackendTurnOverCardAction {
@@ -41,6 +43,29 @@ export interface BackendNameChangeAction {
   name: string;
 }
 
+export interface BackendKickPlayerAction {
+  type: typeof BACKEND_KICK_PLAYER;
+  playerId: string;
+}
+
+export function backendDropCardOnTable(cardId: string): BackendDropCardAction {
+  return {
+    type: BACKEND_DROP_CARD,
+    cardId: cardId,
+    location: [120, 120],
+    zIndex: 0,
+    nowHeldBy: null,
+    remote: true,
+  };
+}
+
+export function backendTurnCardOverTable(cardId: string): BackendDropCardAction {
+  return {
+    type: BACKEND_TURN_OVER_CARD,
+    cardId: cardId,
+  };
+}
+
 export function backendPlayersUpdate(players: DbPlayer[], connections: DbConnection[]): BackendPlayersUpdateAction {
   return {
     type: BACKEND_PLAYERS_UPDATE,
@@ -56,4 +81,5 @@ export type BackendActionTypes = BackendDropCardAction
   | BackendGetInitialStateAction
   | BackendInitialCardStateAction
   | BackendPlayersUpdateAction
-  | BackendNameChangeAction;
+  | BackendNameChangeAction
+  | BackendKickPlayerAction;

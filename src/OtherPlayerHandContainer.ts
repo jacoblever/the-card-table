@@ -2,7 +2,7 @@ import { connect } from 'react-redux'
 import { Dispatch } from 'redux';
 
 import { AppState, Player } from "./store/state";
-import { ActionTypes } from './store/actions';
+import { ActionTypes, kickPlayer } from './store/actions';
 import { OtherPlayerHandComponent } from "./OtherPlayerHandComponent";
 
 type Props = {
@@ -16,6 +16,7 @@ const mapStateToProps = (state: AppState, ownProps: Props) => ({
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) => ({
+  kickPlayer: () => dispatch(kickPlayer(ownProps.player.id)),
 });
 
 export default connect(

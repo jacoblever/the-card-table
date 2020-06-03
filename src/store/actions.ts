@@ -9,6 +9,7 @@ export const WS_DISCONNECT = "WS_DISCONNECT";
 export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const PLAYERS_UPDATE = "PLAYERS_UPDATE";
 export const NAME_CHANGE = "NAME_CHANGE";
+export const KICK_PLAYER = "KICK_PLAYER";
 
 interface RemoteAction {
     remote: boolean;
@@ -57,10 +58,15 @@ export interface PlayersUpdateAction {
   players: Player[];
 }
 
-export interface NameChangeAction extends RemoteAction{
+export interface NameChangeAction extends RemoteAction {
   type: typeof NAME_CHANGE;
   playerId: string;
   name: string;
+}
+
+export interface KickPlayerAction extends RemoteAction {
+  type: typeof KICK_PLAYER;
+  playerId: string;
 }
 
 export type ActionTypes = PickUpCardAction
@@ -71,7 +77,8 @@ export type ActionTypes = PickUpCardAction
   | WsDisconnectAction
   | InitialCardStateAction
   | PlayersUpdateAction
-  | NameChangeAction;
+  | NameChangeAction
+  | KickPlayerAction;
 
 export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): ActionTypes {
   return {
@@ -128,5 +135,13 @@ export function nameChange(playerId: string, name: string): ActionTypes {
     remote: false,
     playerId: playerId,
     name: name,
+  };
+}
+
+export function kickPlayer(playerId: string): ActionTypes {
+  return {
+    type: KICK_PLAYER,
+    playerId: playerId,
+    remote: false,
   };
 }

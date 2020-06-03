@@ -5,7 +5,7 @@ import {
   databaseToBackendCard
 } from "../common/backend_state";
 import {
-  deleteConnection,
+  deleteConnection, deletePlayer,
   getCards,
   getConnection,
   getConnections,
@@ -17,12 +17,54 @@ import {
 import {
   BACKEND_DROP_CARD,
   BACKEND_GET_INITIAL_STATE,
-  BACKEND_INITIAL_CARD_STATE,
+  BACKEND_INITIAL_CARD_STATE, BACKEND_KICK_PLAYER,
   BACKEND_NAME_CHANGE,
   BACKEND_TURN_OVER_CARD,
-  BackendActionTypes,
-  BackendInitialCardStateAction, backendPlayersUpdate
+  BackendActionTypes, backendDropCardOnTable,
+  BackendInitialCardStateAction, backendPlayersUpdate, backendTurnCardOverTable
 } from "../common/backend_actions";
+
+async function asyncForEach<T>(array: T[], callback: (item: T, index: number, array: T[]) => void) {
+  for (let index = 0; index < array.length; index++) {
+    await callback(array[index], index, array);
+  }
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function movePlayersCardsToTable(roomId: string, action: BackendKickPlayerAction, event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, connections: any[] | DbConnection[]) {
+  let playersCards = (await getCards(roomId))
+    .filter(x => x.heldBy === action.playerId);
+  await asyncForEach(playersCards, async (card, i) => {
+    if (card.flipCount % 2 === 1) {
+      let flipAction = backendTurnCardOverTable(card.cardId);
+      await storeCardFlip({
+        roomId: roomId,
+        cardId: flipAction.cardId,
+      });
+      await pushToConnections(
+        event.requestContext,
+        connections.map(x => x.connectionId),
+        flipAction,
+      );
+    }
+    let dropAction = backendDropCardOnTable(card.cardId);
+    await storeCardDrop({
+      roomId: roomId,
+      cardId: dropAction.cardId,
+      newLocation: dropAction.location,
+      newZIndex: dropAction.zIndex,
+      newHeldBy: dropAction.nowHeldBy,
+    });
+    await pushToConnections(
+      event.requestContext,
+      connections.map(x => x.connectionId),
+      dropAction,
+    );
+  });
+}
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   let senderConnectionId = event.requestContext.connectionId;
@@ -59,6 +101,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   }
 
   let actionToSend: BackendActionTypes = action;
+  let sendToSelf = false;
   switch (action.type) {
     case BACKEND_DROP_CARD:
       await storeCardDrop({
@@ -83,13 +126,27 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       });
       actionToSend = backendPlayersUpdate(await getPlayers(roomId), connections);
       break;
+    case BACKEND_KICK_PLAYER:
+      await deletePlayer(roomId, action.playerId,);
+      await movePlayersCardsToTable(roomId, action, event, connections);
+
+      // This is hacky, we want to clients to have already moved the cards to the table
+      // before we remove the player
+      await sleep(700);
+
+      actionToSend = backendPlayersUpdate(await getPlayers(roomId), connections);
+      sendToSelf = true;
+      break;
     default:
       throw new Error(`Action type ${action.type} not handled by backend`);
   }
 
   let otherConnectionIds = connections
-    .map(x => x.connectionId)
-    .filter(id => id !== senderConnectionId);
+    .map(x => x.connectionId);
+  if(!sendToSelf) {
+    otherConnectionIds = otherConnectionIds
+      .filter(id => id !== senderConnectionId);
+  }
 
   let staleConnectionIds = await pushToConnections(event.requestContext, otherConnectionIds, actionToSend);
 

@@ -11,6 +11,8 @@ import OfflineIcon from './icons/OfflineIcon.svg'
 type Props = {
   player: Player,
   cards: Card[],
+
+  kickPlayer: () => void,
 }
 
 export class OtherPlayerHandComponent extends React.Component<Props, {}> {
@@ -64,9 +66,16 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
 
   private renderOnlineStatus(): JSX.Element {
     if(!this.props.player.online) {
-      return <img src={OfflineIcon} alt="Offline" width="30px" />;
+      return <img onClick={() => this.onKickPlayer()} src={OfflineIcon} alt="Offline" width="30px" />;
     }
     return <span />;
+  }
+
+  private onKickPlayer() {
+    let actuallyKick = window.confirm(`Are you sure you want to remove ${this.props.player.name} from the game?`);
+    if(actuallyKick) {
+      this.props.kickPlayer();
+    }
   }
 
   render() {
