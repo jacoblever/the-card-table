@@ -1,6 +1,7 @@
 import { Card, CardState } from "./state";
 import {
   ActionTypes,
+  DESELECT_ALL_CARDS,
   DROP_CARD,
   INITIAL_CARD_STATE,
   CHANGE_ROOM,
@@ -8,8 +9,10 @@ import {
   NAME_CHANGE,
   PICK_UP_CARD,
   PLAYERS_UPDATE,
+  SELECT_CARDS_UNDER,
   TURN_OVER_CARD
 } from "./actions";
+import { DeselectAllCardsReducer, SelectCardsUnderReducer } from "./selection_reducers";
 
 export function getRoomIdFromUrl(): string | null {
   if(window.location.pathname === '/') {
@@ -60,6 +63,10 @@ export function CardsReducer(
         ...state,
         players: players,
       };
+    case SELECT_CARDS_UNDER:
+      return SelectCardsUnderReducer(state, action);
+    case DESELECT_ALL_CARDS:
+      return DeselectAllCardsReducer(state);
     case PICK_UP_CARD:
     case MOVE_CARD:
     case DROP_CARD:
@@ -74,7 +81,7 @@ export function CardsReducer(
         return Math.max(
           ...cards.map(c => c.zIndex),
         );
-      }
+      };
 
       return {
         ...state,

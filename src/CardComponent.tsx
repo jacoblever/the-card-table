@@ -2,6 +2,7 @@ import React from 'react';
 
 import interact from 'interactjs'
 import '@interactjs/types'
+import 'long-press-event/src/long-press-event'
 
 import { Suit } from './Suit';
 import './CardComponent.css';
@@ -18,8 +19,10 @@ export type CardProps = {
   faceUp: boolean,
   zIndex: number,
   movable: boolean,
+  selected: boolean,
 
-  onClick: () => void,
+  onTurnOver: () => void,
+  onSelectUnder: () => void,
   onPickUp: () => void,
   onMove: (location: Coordinates) => void,
   onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
@@ -75,6 +78,9 @@ export class CardComponent extends React.Component<CardProps, CardState> {
     if(!this.props.movable) {
       return;
     }
+    this.domElement.current!.addEventListener('long-press', e => {
+      this.props.onSelectUnder();
+    })
     interact(this.domElement.current!)
       .draggable({
         inertia: false,
@@ -116,10 +122,10 @@ export class CardComponent extends React.Component<CardProps, CardState> {
   render() {
     return (
       <div
-        className="card"
+        className={this.getClassNames()}
         ref={this.domElement}
         style={this.style()}
-        onDoubleClick={this.onDoubleClick()}
+        onDoubleClick={(e) => this.onDoubleClick()}
       >
         <svg width="100%" viewBox="0 0 169.075 244.64">
           <use xlinkHref={`#${this.cardName()}`} />
@@ -128,10 +134,18 @@ export class CardComponent extends React.Component<CardProps, CardState> {
     );
   }
 
+  private getClassNames() {
+    let classNames = "card";
+    if(this.props.selected){
+      classNames += " selected";
+    }
+    return classNames;
+  }
+
   private onDoubleClick() {
     if(!this.props.movable) {
       return;
     }
-    return this.props.onClick;
+    return this.props.onTurnOver();
   }
 }

@@ -28,6 +28,7 @@ export interface Card {
 
   /** Not persisted on the backend */
   forceFaceDown: boolean;
+  selected: boolean;
 }
 
 export type CardOwner = string | typeof CardOwnerTable

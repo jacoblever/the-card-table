@@ -13,6 +13,8 @@ type CardTableProps = {
   
   onMount: () => void,
   onUnmount: () => void,
+
+  onDeselectAllCards: () => void,
 }
 
 class CardTableComponent extends React.Component<CardTableProps, {}> {
@@ -94,7 +96,7 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
 
   render() {
     return (
-      <div className="table" id="card-table">
+      <div className="table" id="card-table" onClick={(e) => this.onClick(e)}>
         {this.renderOtherPlayers()}
 
         {this.renderCards()}
@@ -102,6 +104,14 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
         <HandContainer player={this.getPlayersInOrderWithMeFirst()[0]} />
       </div>
     );
+  }
+
+  private onClick(event: React.MouseEvent<HTMLDivElement>): void {
+    let cardElement = (event.target as Element).closest(".card");
+    if(cardElement && cardElement.classList.contains("selected")) {
+      return;
+    }
+    return this.props.onDeselectAllCards();
   }
 }
 

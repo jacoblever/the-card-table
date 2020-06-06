@@ -11,6 +11,8 @@ export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const PLAYERS_UPDATE = "PLAYERS_UPDATE";
 export const NAME_CHANGE = "NAME_CHANGE";
 export const KICK_PLAYER = "KICK_PLAYER";
+export const SELECT_CARDS_UNDER = "SELECT_CARDS_UNDER";
+export const DESELECT_ALL_CARDS = "DESELECT_ALL_CARDS";
 
 interface RemoteAction {
     remote: boolean;
@@ -75,6 +77,15 @@ export interface KickPlayerAction extends RemoteAction {
   playerId: string;
 }
 
+export interface SelectCardsUnderAction {
+  type: typeof SELECT_CARDS_UNDER;
+  cardId: string;
+}
+
+export interface DeselectAllCardsAction {
+  type: typeof DESELECT_ALL_CARDS;
+}
+
 export type ActionTypes = PickUpCardAction
   | MoveCardAction
   | DropCardAction
@@ -85,7 +96,9 @@ export type ActionTypes = PickUpCardAction
   | InitialCardStateAction
   | PlayersUpdateAction
   | NameChangeAction
-  | KickPlayerAction;
+  | KickPlayerAction
+  | SelectCardsUnderAction
+  | DeselectAllCardsAction;
 
 export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): ActionTypes {
   return {
@@ -157,5 +170,18 @@ export function kickPlayer(playerId: string): ActionTypes {
     type: KICK_PLAYER,
     playerId: playerId,
     remote: false,
+  };
+}
+
+export function selectCardsUnder(cardId: string): ActionTypes {
+  return {
+    type: SELECT_CARDS_UNDER,
+    cardId: cardId,
+  };
+}
+
+export function deselectAllCards(): ActionTypes {
+  return {
+    type: DESELECT_ALL_CARDS,
   };
 }
