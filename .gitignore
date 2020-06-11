@@ -17,7 +17,8 @@ backend/**/*.js.map
 backend/*/build/**
 
 # production
-/build
+/build-staging
+/build-production
 
 # misc
 .DS_Store

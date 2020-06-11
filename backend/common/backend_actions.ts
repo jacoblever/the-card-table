@@ -59,7 +59,7 @@ export function backendDropCardOnTable(cardId: string): BackendDropCardAction {
   };
 }
 
-export function backendTurnCardOverTable(cardId: string): BackendDropCardAction {
+export function backendTurnCardOverTable(cardId: string): BackendTurnOverCardAction {
   return {
     type: BACKEND_TURN_OVER_CARD,
     cardId: cardId,

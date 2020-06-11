@@ -4,15 +4,36 @@ import * as cdk from '@aws-cdk/core';
 import { InfrastructureStack } from '../lib/infrastructure-stack';
 
 const app = new cdk.App();
-let stack = new InfrastructureStack(
+
+const jacobleverComCertArn =
+  "arn:aws:acm:eu-west-1:350413574090:certificate/8da48eb3-bba5-4337-a45f-335871db9572";
+const stackEnv = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION,
+};
+
+let productionStack = new InfrastructureStack(
   app,
   'TheCardRoomInfrastructure',
+  { env: stackEnv },
   {
-    env: {
-      account: process.env.CDK_DEFAULT_ACCOUNT,
-      region: process.env.CDK_DEFAULT_REGION,
-    },
+    frontendCustomDomain: "cards.jacoblever.com",
+    customDomainCertificateArn: jacobleverComCertArn,
+    frontendEnvironment: "production",
   },
 );
-stack.buildStack()
-  .then(r => "Stack built");
+productionStack.buildStack()
+  .then(r => "production stack built");
+
+let stagingStack = new InfrastructureStack(
+  app,
+  'TheCardRoomInfrastructureStaging',
+  { env: stackEnv },
+  {
+    frontendCustomDomain: "cards-staging.jacoblever.com",
+    customDomainCertificateArn: jacobleverComCertArn,
+    frontendEnvironment: "staging",
+  },
+);
+stagingStack.buildStack()
+  .then(r => "staging stack built");

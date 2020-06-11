@@ -25,7 +25,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "echo \"Error: Use either build:staging or build:production to make a build for deployment\" && exit 1",
+    "build:staging": "export $(egrep -v '^#' .env.staging | xargs) && react-scripts build && rm -rf build-staging && mv build build-staging",
+    "build:production": "export $(egrep -v '^#' .env.production | xargs) && react-scripts build && rm -rf build-production && mv build build-production",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

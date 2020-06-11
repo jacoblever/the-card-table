@@ -1,23 +1,47 @@
 import * as cdk from '@aws-cdk/core';
-import { CfnOutput } from '@aws-cdk/core';
-import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-cdk/aws-apigatewayv2'
+import { CfnOutput, RemovalPolicy } from '@aws-cdk/core';
+import {
+  CfnApi,
+  CfnApiMapping,
+  CfnDeployment,
+  CfnDomainName,
+  CfnIntegration,
+  CfnRoute,
+  CfnStage
+} from '@aws-cdk/aws-apigatewayv2'
 import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
+import { Bucket, BucketAccessControl, HttpMethods } from '@aws-cdk/aws-s3'
+import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment'
 import { Effect, PolicyStatement } from '@aws-cdk/aws-iam'
 import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
 import { exec } from 'child_process'
 import { promisify } from 'util';
+import { Certificate } from '@aws-cdk/aws-certificatemanager'
 
 const execAsync = promisify(exec);
+
+type CardRoomParams = {
+  frontendCustomDomain: string,
+  customDomainCertificateArn: string,
+  frontendEnvironment: "production" | "staging",
+}
 
 export class InfrastructureStack extends cdk.Stack {
   private readonly awsRegion: string;
   private readonly awsAccountId: string;
+  private readonly frontendCustomDomain: string;
+  private readonly customDomainCertificateArn: string;
+  private readonly frontendEnvironment: string;
 
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: cdk.Construct, id: string, props: cdk.StackProps, params: CardRoomParams) {
     super(scope, id, props);
 
     this.awsRegion = props?.env?.region!;
     this.awsAccountId = props?.env?.account!;
+
+    this.frontendCustomDomain = params.frontendCustomDomain;
+    this.customDomainCertificateArn = params.customDomainCertificateArn;
+    this.frontendEnvironment = params.frontendEnvironment;
   }
 
   public async buildStack() {
@@ -154,6 +178,144 @@ export class InfrastructureStack extends cdk.Stack {
         value: `wss://${api.ref}.execute-api.${this.awsRegion}.amazonaws.com/${stage.ref}`,
       }
     );
+    await this.buildFrontend();
+  }
+
+  private async buildFrontend() {
+    let bucket = new Bucket(
+      this,
+      "FrontendBucket",
+      {
+        accessControl: BucketAccessControl.PUBLIC_READ,
+        websiteIndexDocument: "index.html",
+        removalPolicy: RemovalPolicy.DESTROY,
+        cors: [{
+          allowedMethods: [HttpMethods.GET],
+          allowedOrigins: ["*"],
+        }],
+      });
+    bucket.grantPublicAccess();
+    let buildCommands = [
+      `cd ../`,
+      `npm run build:${this.frontendEnvironment}`,
+    ];
+    await execAsync(buildCommands.join(' && ')).then(
+      () => console.log(`Frontend webapp compiled for ${this.frontendEnvironment}`)
+    ).catch(e => console.log(e));
+
+    new BucketDeployment(this, 'DeployWebsite', {
+      sources: [Source.asset(`../build-${this.frontendEnvironment}`)],
+      destinationBucket: bucket,
+    });
+
+    let api = new CfnApi(
+      this,
+      'FrontendApi',
+      {
+        name: 'TheCardRoomFrontendApi',
+        protocolType: "HTTP",
+      },
+    );
+
+    let integration = new CfnIntegration(
+      this,
+      'ProxyIntegration',
+      {
+        apiId: api.ref,
+        integrationType: "HTTP_PROXY",
+        integrationUri: `${bucket.bucketWebsiteUrl}/index.html`,
+        payloadFormatVersion: "1.0",
+        integrationMethod: "GET"
+      },
+    );
+
+    let indexRoute = new CfnRoute(
+      this,
+      'IndexRoute',
+      {
+        apiId: api.ref,
+        routeKey: "GET /",
+        target: `integrations/${integration.ref}`,
+      }
+    );
+    let proxyRoute = new CfnRoute(
+      this,
+      'ProxyRoute',
+      {
+        apiId: api.ref,
+        routeKey: "GET /{proxy+}",
+        target: `integrations/${integration.ref}`,
+      }
+    );
+
+    let deployment = new CfnDeployment(
+      this,
+      "FrontendDeployment",
+      {
+        apiId: api.ref,
+      },
+    );
+    deployment.addDependsOn(indexRoute);
+    deployment.addDependsOn(proxyRoute);
+
+    let stage = new CfnStage(
+      this,
+      "FrontenStage",
+      {
+        apiId: api.ref,
+        deploymentId: deployment.ref,
+        stageName: "Prod",
+        description: "Prod Stage",
+      },
+    );
+
+    let cert = Certificate.fromCertificateArn(
+      this,
+      'certificate',
+      this.customDomainCertificateArn)
+
+    let domain = new CfnDomainName(
+      this,
+      "DomainName",
+      {
+        domainName: this.frontendCustomDomain,
+        domainNameConfigurations: [
+          {
+            certificateArn: cert.certificateArn,
+          }
+        ],
+      }
+    );
+
+    let apiDomainNameMapping = new CfnApiMapping(
+      this,
+      "ApiDomainNameMapping",
+      {
+        domainName: domain.ref,
+        apiId: api.ref,
+        stage: stage.ref,
+      }
+    );
+
+    apiDomainNameMapping.addDependsOn(stage);
+
+    new CfnOutput(
+      this,
+      "FrontendBucketPublicURL",
+      {
+        description: "The URL S3 bucket that hosts the frontend app",
+        value: bucket.bucketWebsiteUrl,
+      }
+    );
+
+    new CfnOutput(
+      this,
+      "FrontendCloudFrontDomain",
+      {
+        description: "The CloudFront URL for the frontend app (set a CNAME to point to this)",
+        value: domain.attrRegionalDomainName,
+      }
+    );
   }
 
   private createIntegration(id: string, api: CfnApi, description: string, awsRegion: string, func: LambdaFunction) {
@@ -188,7 +350,7 @@ export class InfrastructureStack extends cdk.Stack {
       `cd ${codeUri}`,
       `cp ../build.sh ./`,
       `./build.sh`,
-      `rm build.sh`,
+      `rm -f build.sh`,
     ];
     await execAsync(buildCommands.join(' && ')).then(
       r => console.log(`${id} (${codeUri}) compiled`)

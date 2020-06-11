@@ -24,7 +24,8 @@ function getWebSocketPath() {
   let playerId = Cookies.get(`playerId-${roomId}`) ?? "NewPlayer";
   let playerName = Cookies.get("default-name") ?? "";
 
-  return `wss://n150j0q9lf.execute-api.eu-west-1.amazonaws.com/Prod?room-id=${roomId}&player-id=${playerId}&player-name=${playerName}`;
+  let url = process.env.REACT_APP_BACKEND_WEBSOCKET_URL;
+  return `${url}?room-id=${roomId}&player-id=${playerId}&player-name=${playerName}`;
 }
 
 const socketMiddleware = () => {
