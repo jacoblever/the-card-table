@@ -4,6 +4,7 @@ export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
 export const DROP_CARD = "DROP_CARD";
 export const TURN_OVER_CARD = "TURN_OVER_CARD";
+export const CHANGE_ROOM = "CHANGE_ROOM";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
 export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
@@ -40,6 +41,11 @@ export interface TurnOverCardAction extends RemoteAction {
     cardId: string;
 }
 
+export interface ChangeRoomAction {
+    type: typeof CHANGE_ROOM;
+    roomId: string | null;
+}
+
 export interface WsConnectAction {
     type: typeof WS_CONNECT;
 }
@@ -73,6 +79,7 @@ export type ActionTypes = PickUpCardAction
   | MoveCardAction
   | DropCardAction
   | TurnOverCardAction
+  | ChangeRoomAction
   | WsConnectAction
   | WsDisconnectAction
   | InitialCardStateAction
@@ -114,6 +121,13 @@ export function turnOverCard(cardId: string, remote: boolean = false): ActionTyp
     type: TURN_OVER_CARD,
     remote: remote,
     cardId: cardId,
+  };
+}
+
+export function changeRoom(roomId: string | null): ActionTypes {
+  return {
+    type: CHANGE_ROOM,
+    roomId: roomId,
   };
 }
 

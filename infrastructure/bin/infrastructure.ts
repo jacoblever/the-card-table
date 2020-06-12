@@ -12,7 +12,7 @@ const stackEnv = {
   region: process.env.CDK_DEFAULT_REGION,
 };
 
-let productionStack = new InfrastructureStack(
+new InfrastructureStack(
   app,
   'TheCardRoomInfrastructure',
   { env: stackEnv },
@@ -22,10 +22,8 @@ let productionStack = new InfrastructureStack(
     frontendEnvironment: "production",
   },
 );
-productionStack.buildStack()
-  .then(r => "production stack built");
 
-let stagingStack = new InfrastructureStack(
+new InfrastructureStack(
   app,
   'TheCardRoomInfrastructureStaging',
   { env: stackEnv },
@@ -35,5 +33,3 @@ let stagingStack = new InfrastructureStack(
     frontendEnvironment: "staging",
   },
 );
-stagingStack.buildStack()
-  .then(r => "staging stack built");

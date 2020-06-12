@@ -15,12 +15,7 @@ import {
   WS_DISCONNECT
 } from "../store/actions";
 
-function getRoomId() {
-  return window.location.pathname.split('/')[1];
-}
-
-function getWebSocketPath() {
-  let roomId = getRoomId();
+function getWebSocketPath(roomId: string) {
   let playerId = Cookies.get(`playerId-${roomId}`) ?? "NewPlayer";
   let playerName = Cookies.get("default-name") ?? "";
 
@@ -31,7 +26,7 @@ function getWebSocketPath() {
 const socketMiddleware = () => {
   let socket: WebSocket | null = null;
 
-  const onOpen = (store: Store<AppState, ActionTypes>) => (event: Event) => {
+  const onOpen = (store: Store<AppState, ActionTypes>, roomId: string) => (event: Event) => {
     console.log('websocket open');
     let action = {
       type: "GET_INITIAL_STATE",
@@ -39,7 +34,7 @@ const socketMiddleware = () => {
     socket!.send(JSON.stringify({
       "message":"sendmessage",
       "data": JSON.stringify(action),
-      "roomId": getRoomId(),
+      "roomId": roomId,
     }));
   };
 
@@ -65,7 +60,8 @@ const socketMiddleware = () => {
         store.dispatch(turnOverCard(message.cardId, true));
         break;
       case INITIAL_CARD_STATE:
-        Cookies.set(`playerId-${getRoomId()}`, message.state.me)
+        let roomId = store.getState().roomId;
+        Cookies.set(`playerId-${roomId}`, message.state.me)
         store.dispatch(message);
         break;
       case PLAYERS_UPDATE:
@@ -77,16 +73,18 @@ const socketMiddleware = () => {
   };
 
   return (store: Store<AppState, ActionTypes>) => (next: Dispatch<ActionTypes>) => (action: ActionTypes) => {
+    let roomIdGetter = () => store.getState().roomId!;
     switch (action.type) {
       case WS_CONNECT:
         if (socket !== null) {
           socket.close();
         }
 
-        socket = new WebSocket(getWebSocketPath());
+        let roomId = roomIdGetter();
+        socket = new WebSocket(getWebSocketPath(roomId));
         socket.onmessage = onMessage(store);
         socket.onclose = onClose(store);
-        socket.onopen = onOpen(store);
+        socket.onopen = onOpen(store, roomId);
         break;
       case WS_DISCONNECT:
         if (socket !== null) {
@@ -109,7 +107,7 @@ const socketMiddleware = () => {
         socket.send(JSON.stringify({
           "message":"sendmessage",
           "data": JSON.stringify(remoteAction),
-          "roomId": getRoomId(),
+          "roomId": roomIdGetter(),
         }));
         break;
       default:

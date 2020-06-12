@@ -1,11 +1,18 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import {
+  APIGatewayEventDefaultAuthorizerContext,
+  APIGatewayProxyEvent,
+  APIGatewayProxyEventBase,
+  APIGatewayProxyResult
+} from "aws-lambda";
 import { pushToConnection, pushToConnections } from "../common/pushMessage";
 import {
   BackendCardState,
   databaseToBackendCard
 } from "../common/backend_state";
 import {
-  deleteConnection, deletePlayer,
+  DbConnection,
+  deleteConnection,
+  deletePlayer,
   getCards,
   getConnection,
   getConnections,
@@ -21,7 +28,7 @@ import {
   BACKEND_NAME_CHANGE,
   BACKEND_TURN_OVER_CARD,
   BackendActionTypes, backendDropCardOnTable,
-  BackendInitialCardStateAction, backendPlayersUpdate, backendTurnCardOverTable
+  BackendInitialCardStateAction, BackendKickPlayerAction, backendPlayersUpdate, backendTurnCardOverTable
 } from "../common/backend_actions";
 
 async function asyncForEach<T>(array: T[], callback: (item: T, index: number, array: T[]) => void) {
@@ -34,7 +41,12 @@ async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function movePlayersCardsToTable(roomId: string, action: BackendKickPlayerAction, event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>, connections: any[] | DbConnection[]) {
+async function movePlayersCardsToTable(
+  roomId: string,
+  action: BackendKickPlayerAction,
+  event: APIGatewayProxyEventBase<APIGatewayEventDefaultAuthorizerContext>,
+  connections: DbConnection[],
+) {
   let playersCards = (await getCards(roomId))
     .filter(x => x.heldBy === action.playerId);
   await asyncForEach(playersCards, async (card, i) => {

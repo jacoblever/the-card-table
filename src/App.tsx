@@ -1,14 +1,26 @@
 import React from 'react';
 import HiddenSvgCardsComponent from './HiddenSvgCardsComponent';
 import CardTableContainer from './CardTableContainer';
+import { LobbyContainer } from "./LobbyContainer";
 
-function App() {
+type AppProps = {
+  roomId: string | null,
+}
+
+function mainComponent(roomId: string | null): JSX.Element {
+  if(roomId === null) {
+    return <LobbyContainer />;
+  } else {
+    return <CardTableContainer />;
+  }
+}
+
+function App({ roomId }: AppProps) {
   return (
-    <div>
+    <div className="app">
       <HiddenSvgCardsComponent />
-      <CardTableContainer />
+      {mainComponent(roomId)}
     </div>
   );
 }
-
 export default App;

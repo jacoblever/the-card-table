@@ -3,12 +3,34 @@ import {
   ActionTypes,
   DROP_CARD,
   INITIAL_CARD_STATE,
+  CHANGE_ROOM,
   MOVE_CARD,
   NAME_CHANGE,
   PICK_UP_CARD,
   PLAYERS_UPDATE,
   TURN_OVER_CARD
 } from "./actions";
+
+export function getRoomIdFromUrl(): string | null {
+  if(window.location.pathname === '/') {
+    return null;
+  }
+  return window.location.pathname.split('/').slice(1).join('/');
+}
+
+export function RoomIdReducer(
+  state: string,
+  action: ActionTypes,
+): string | null {
+  if (state === undefined) {
+    return getRoomIdFromUrl()
+  }
+
+  if(action.type === CHANGE_ROOM) {
+    return action.roomId;
+  }
+  return state;
+}
 
 export function CardsReducer(
   state: CardState,

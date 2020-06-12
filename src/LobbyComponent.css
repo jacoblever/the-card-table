@@ -1,0 +1,34 @@
+.lobby {
+  width: 100%;
+  height: 500px;
+  outline: 2px solid black;
+  background-color: green;
+}
+
+.lobby-welcome {
+  outline: 1px solid black;
+  width: 60%;
+  margin: auto;
+  padding: 2%;
+  max-width: 400px;
+  background-color: white;
+}
+
+.lobby-sample-cards {
+  width: 250px;
+  height: 150px;
+  margin: auto;
+}
+
+.lobby form {
+  text-align: center;
+}
+
+.lobby input {
+  width: 96%;
+}
+
+.lobby button {
+  width: 25%;
+  margin: 2%;
+}

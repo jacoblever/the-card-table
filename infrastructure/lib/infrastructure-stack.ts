@@ -42,9 +42,7 @@ export class InfrastructureStack extends cdk.Stack {
     this.frontendCustomDomain = params.frontendCustomDomain;
     this.customDomainCertificateArn = params.customDomainCertificateArn;
     this.frontendEnvironment = params.frontendEnvironment;
-  }
 
-  public async buildStack() {
     let api = new CfnApi(
       this,
       "api",
@@ -122,9 +120,9 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
 
-    let connectFunction = await this.createFunction("OnConnectFunction", "../backend/onconnect/", api);
-    let disconnectFunction = await this.createFunction("DisconnectFunction", "../backend/ondisconnect/", api);
-    let sendFunction = await this.createFunction("SendFunction", "../backend/sendmessage/", api);
+    let connectFunction = this.createFunction("OnConnectFunction", "../backend/onconnect/", api);
+    let disconnectFunction = this.createFunction("DisconnectFunction", "../backend/ondisconnect/", api);
+    let sendFunction = this.createFunction("SendFunction", "../backend/sendmessage/", api);
 
     [connectFunction, disconnectFunction, sendFunction].forEach(f => {
       playersTable.grantReadWriteData(f);
@@ -178,10 +176,10 @@ export class InfrastructureStack extends cdk.Stack {
         value: `wss://${api.ref}.execute-api.${this.awsRegion}.amazonaws.com/${stage.ref}`,
       }
     );
-    await this.buildFrontend();
+    this.buildFrontend();
   }
 
-  private async buildFrontend() {
+  private buildFrontend() {
     let bucket = new Bucket(
       this,
       "FrontendBucket",
@@ -195,13 +193,6 @@ export class InfrastructureStack extends cdk.Stack {
         }],
       });
     bucket.grantPublicAccess();
-    let buildCommands = [
-      `cd ../`,
-      `npm run build:${this.frontendEnvironment}`,
-    ];
-    await execAsync(buildCommands.join(' && ')).then(
-      () => console.log(`Frontend webapp compiled for ${this.frontendEnvironment}`)
-    ).catch(e => console.log(e));
 
     new BucketDeployment(this, 'DeployWebsite', {
       sources: [Source.asset(`../build-${this.frontendEnvironment}`)],
@@ -217,13 +208,14 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
 
+    let frontendBucketUrl = `https://${bucket.bucketName}.s3-${this.awsRegion}.amazonaws.com`;
     let integration = new CfnIntegration(
       this,
       'ProxyIntegration',
       {
         apiId: api.ref,
         integrationType: "HTTP_PROXY",
-        integrationUri: `${bucket.bucketWebsiteUrl}/index.html`,
+        integrationUri: `${frontendBucketUrl}/index.html`,
         payloadFormatVersion: "1.0",
         integrationMethod: "GET"
       },
@@ -304,7 +296,7 @@ export class InfrastructureStack extends cdk.Stack {
       "FrontendBucketPublicURL",
       {
         description: "The URL S3 bucket that hosts the frontend app",
-        value: bucket.bucketWebsiteUrl,
+        value: frontendBucketUrl,
       }
     );
 
@@ -345,17 +337,7 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-  private async createFunction(id: string, codeUri: string, api: CfnApi) {
-    let buildCommands = [
-      `cd ${codeUri}`,
-      `cp ../build.sh ./`,
-      `./build.sh`,
-      `rm -f build.sh`,
-    ];
-    await execAsync(buildCommands.join(' && ')).then(
-      r => console.log(`${id} (${codeUri}) compiled`)
-    );
-
+  private createFunction(id: string, codeUri: string, api: CfnApi) {
     let func = new LambdaFunction(
       this,
       id,

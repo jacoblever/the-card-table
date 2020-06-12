@@ -2,6 +2,7 @@ import { Suit } from '../Suit';
 
 export interface AppState {
   cards: CardState;
+  roomId: string | null;
 }
 
 export interface CardState {
