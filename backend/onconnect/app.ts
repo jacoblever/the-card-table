@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
-  DatabaseCard,
+  DatabaseCard, DbConnection,
   DbPlayer,
   deleteConnection,
   getConnections,
@@ -85,10 +85,11 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await putCards(cards.slice(50));
   }
 
-  let newConnection = {
+  let newConnection: DbConnection = {
     roomId: roomId,
     connectionId: connectionId,
     playerId: playerId,
+    readyForActions: false,
   };
   await putConnection(newConnection);
 
@@ -96,7 +97,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   let staleConnectionIds = await pushToConnections(
     event.requestContext,
-    existingConnections.map(x => x.connectionId),
+    existingConnections,
     backendPlayersUpdate(players, connections),
   );
 
@@ -108,7 +109,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     let connectionsLeft = connections.filter(x => !staleConnectionIds.includes(x.connectionId));
     await pushToConnections(
       event.requestContext,
-      connectionsLeft.map(x => x.connectionId),
+      connectionsLeft,
       backendPlayersUpdate(await getPlayers(roomId), connectionsLeft),
     );
   }

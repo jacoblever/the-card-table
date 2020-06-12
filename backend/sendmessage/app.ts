@@ -16,7 +16,7 @@ import {
   getCards,
   getConnection,
   getConnections,
-  getPlayers,
+  getPlayers, markConnectionReadyForActions,
   renamePlayer,
   storeCardDrop,
   storeCardFlip
@@ -58,7 +58,7 @@ async function movePlayersCardsToTable(
       });
       await pushToConnections(
         event.requestContext,
-        connections.map(x => x.connectionId),
+        connections,
         flipAction,
       );
     }
@@ -72,7 +72,7 @@ async function movePlayersCardsToTable(
     });
     await pushToConnections(
       event.requestContext,
-      connections.map(x => x.connectionId),
+      connections,
       dropAction,
     );
   });
@@ -109,6 +109,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       state: cardState,
     };
     await pushToConnection(event.requestContext, senderConnectionId, action);
+    await markConnectionReadyForActions({roomId: roomId, connectionId: senderConnectionId})
     return { statusCode: 200, body: 'Data sent.' };
   }
 
@@ -153,14 +154,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       throw new Error(`Action type ${action.type} not handled by backend`);
   }
 
-  let otherConnectionIds = connections
-    .map(x => x.connectionId);
+  let otherConnections = connections
   if(!sendToSelf) {
-    otherConnectionIds = otherConnectionIds
-      .filter(id => id !== senderConnectionId);
+    otherConnections = otherConnections
+      .filter(c => c.connectionId !== senderConnectionId);
   }
 
-  let staleConnectionIds = await pushToConnections(event.requestContext, otherConnectionIds, actionToSend);
+  let staleConnectionIds = await pushToConnections(event.requestContext, otherConnections, actionToSend);
 
   if(staleConnectionIds.length > 0) {
     staleConnectionIds.forEach(x => {
@@ -170,7 +170,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     let connectionsLeft = connections.filter(x => !staleConnectionIds.includes(x.connectionId));
     await pushToConnections(
       event.requestContext,
-      connectionsLeft.map(x => x.connectionId),
+      connectionsLeft,
       backendPlayersUpdate(await getPlayers(roomId), connectionsLeft),
     );
   }

@@ -1,6 +1,7 @@
 import { APIGatewayEventDefaultAuthorizerContext, APIGatewayEventRequestContextWithAuthorizer } from "aws-lambda";
 import { ApiGatewayManagementApi } from 'aws-sdk';
 import { BackendActionTypes } from "./backend_actions";
+import { DbConnection } from "./database";
 
 export const pushToConnection = async (
   requestContext: APIGatewayEventRequestContextWithAuthorizer<APIGatewayEventDefaultAuthorizerContext>,
@@ -20,18 +21,19 @@ export const pushToConnection = async (
 
 export async function pushToConnections(
   requestContext: APIGatewayEventRequestContextWithAuthorizer<APIGatewayEventDefaultAuthorizerContext>,
-  connectionIds: string[],
+  connections: DbConnection[],
   action: BackendActionTypes,
   ): Promise<string[]> {
   let staleConnectionIds: string[] = []
-  const postCalls = connectionIds
-    .map(async (connectionId) => {
+  const postCalls = connections
+    .filter(x => x.readyForActions)
+    .map(async (connection) => {
       try {
-        await pushToConnection(requestContext, connectionId, action)
+        await pushToConnection(requestContext, connection.connectionId, action)
       } catch (e) {
         if (e.statusCode === 410) {
-          console.log(`Found stale connection, deleting ${connectionId}`);
-          staleConnectionIds.push(connectionId);
+          console.log(`Found stale connection, deleting ${connection.connectionId}`);
+          staleConnectionIds.push(connection.connectionId);
         } else {
           throw e;
         }

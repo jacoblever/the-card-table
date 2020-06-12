@@ -21,7 +21,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let connections = await getConnections(connection.roomId);
   await pushToConnections(
     event.requestContext,
-    connections.map(x => x.connectionId),
+    connections,
     backendPlayersUpdate(players, connections),
   );
 

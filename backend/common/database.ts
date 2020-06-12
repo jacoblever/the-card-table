@@ -17,6 +17,7 @@ export type DbConnection = {
   connectionId: string;
   roomId: string;
   playerId: string;
+  readyForActions: boolean;
 };
 
 export type DatabaseCard = {
@@ -90,6 +91,7 @@ export async function getConnection(connectionId: string): Promise<DbConnection 
     connectionId: item['connectionId'],
     roomId: item['roomId'],
     playerId: item['playerId'],
+    readyForActions: item['readyForActions'],
   };
 };
 
@@ -111,6 +113,7 @@ export const getConnections = async (roomId: string) => {
       connectionId: item['connectionId'],
       roomId: item['roomId'],
       playerId: item['playerId'],
+      readyForActions: item['readyForActions'],
     };
   });
 };
@@ -121,6 +124,25 @@ export const deleteConnection = async (roomId: string, connectionId: string) => 
     Key: {
       roomId: roomId,
       connectionId: connectionId,
+    },
+  }).promise();
+};
+
+type ConnectionReadyForActions = {
+  roomId: string;
+  connectionId: string;
+}
+
+export const markConnectionReadyForActions = async (connectionReadyForActions: ConnectionReadyForActions) => {
+  await ddb.update({
+    TableName: getLambdaEnv().ConnectionsTableName,
+    Key: {
+      roomId: connectionReadyForActions.roomId,
+      connectionId: connectionReadyForActions.connectionId,
+    },
+    UpdateExpression: 'set readyForActions = :true',
+    ExpressionAttributeValues: {
+      ':true': true,
     },
   }).promise();
 };
