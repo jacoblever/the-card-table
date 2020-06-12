@@ -60,10 +60,12 @@ export class LobbyComponent extends React.Component<LobbyProps, LobbyState> {
         faceUp={x.faceUp}
         zIndex={1}
         movable={false}
-        onClick={() => {}}
+        selected={false}
+        onTurnOver={() => {}}
         onPickUp={() => {}}
         onMove={() => {}}
         onDrop={() => {}}
+        onSelectUnder={() => {}}
       />
     })
   }

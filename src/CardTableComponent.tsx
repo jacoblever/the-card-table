@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 
 import './CardTableComponent.css';
 import { CardContainer } from './CardContainer';
-import { Card, Player } from './store/state';
+import { Card, CardOwner, Coordinates, Player } from './store/state';
 import HandContainer from "./HandContainer";
 import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
 
@@ -15,6 +15,11 @@ type CardTableProps = {
   onUnmount: () => void,
 
   onDeselectAllCards: () => void,
+
+  onTurnOver: (cardId: string) => void,
+  onPickUp: (cardId: string) => void,
+  onMove: (cardId: string, location: Coordinates) => void,
+  onDrop: (cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
 }
 
 class CardTableComponent extends React.Component<CardTableProps, {}> {
@@ -88,6 +93,11 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
           id={card.id}
           key={card.id}
           movable={true}
+
+          onTurnOver={() => this.props.onTurnOver(card.id)}
+          onPickUp={() => this.props.onPickUp(card.id)}
+          onMove={(location: Coordinates) => this.props.onMove(card.id, location)}
+          onDrop={(location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => this.props.onDrop(card.id, location, zIndex, nowHeldBy)}
         />
       )
     }

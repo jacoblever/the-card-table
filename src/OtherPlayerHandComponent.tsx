@@ -91,6 +91,11 @@ export class OtherPlayerHandComponent extends React.Component<Props, {}> {
             key={card.id}
             forceFaceDown={true}
             movable={false}
+
+            onTurnOver={() => {}}
+            onPickUp={() => {}}
+            onMove={() => {}}
+            onDrop={() => {}}
           />
         )}
       </div>

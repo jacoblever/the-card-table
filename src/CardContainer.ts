@@ -1,7 +1,7 @@
 import { connect } from 'react-redux'
 import { Dispatch } from 'redux';
 
-import { pickUpCard, turnOverCard, moveCard, dropCard, ActionTypes, selectCardsUnder } from './store/actions'
+import { ActionTypes, selectCardsUnder } from './store/actions'
 
 import { AppState, CardOwner, Coordinates } from "./store/state";
 import { CardComponent } from './CardComponent'
@@ -10,6 +10,11 @@ type Props = {
   id: string,
   forceFaceDown?: boolean,
   movable: boolean,
+
+  onTurnOver: () => void,
+  onPickUp: () => void,
+  onMove: (location_delta: Coordinates) => void,
+  onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
 }
 
 const mapStateToProps = (state: AppState, ownProps: Props) => {
@@ -26,11 +31,7 @@ const mapStateToProps = (state: AppState, ownProps: Props) => {
 };
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: Props) => ({
-  onTurnOver: () => dispatch(turnOverCard(ownProps.id)),
   onSelectUnder: () => dispatch(selectCardsUnder(ownProps.id)),
-  onPickUp: () => dispatch(pickUpCard(ownProps.id)),
-  onMove: (location: Coordinates) => dispatch(moveCard(ownProps.id, location)),
-  onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => dispatch(dropCard(ownProps.id, location, zIndex, nowHeldBy)),
 });
 
 export const CardContainer = connect(

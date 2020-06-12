@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 
 import './HandComponent.css';
 import EditIcon from './icons/EditIcon.svg'
-import { Card, Player } from "./store/state";
+import { Card, CardOwner, Coordinates, Player } from "./store/state";
 import { CardContainer } from "./CardContainer";
 
 type Props = {
@@ -14,6 +14,11 @@ type Props = {
   cards: Card[],
 
   changeName: (name: string) => {};
+
+  onTurnOver: (cardId: string) => void,
+  onPickUp: (cardId: string) => void,
+  onMove: (cardId: string, location: Coordinates) => void,
+  onDrop: (cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
 }
 
 type State = {
@@ -128,6 +133,11 @@ export class HandComponent extends React.Component<Props, State> {
               id={card.id}
               key={card.id}
               movable={true}
+
+              onTurnOver={() => this.props.onTurnOver(card.id)}
+              onPickUp={() => this.props.onPickUp(card.id)}
+              onMove={(location: Coordinates) => this.props.onMove(card.id, location)}
+              onDrop={(location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => this.props.onDrop(card.id, location, zIndex, nowHeldBy)}
             />
           )}
           {this.renderName()}
