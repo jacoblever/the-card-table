@@ -3,7 +3,6 @@ import { connect } from 'react-redux'
 import {
   pickUpCard,
   turnOverCard,
-  dropCard,
   selectCardsUnder,
   dragCard, AppThunkDispatch, releaseCard,
 } from './store/actions'

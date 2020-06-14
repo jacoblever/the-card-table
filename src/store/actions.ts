@@ -28,15 +28,19 @@ export interface PickUpCardAction extends RemoteAction<typeof PICK_UP_CARD> {
 }
 
 export interface MoveCardAction extends Action<typeof MOVE_CARD> {
+  moves: {
     cardId: string;
     location: Coordinates;
+  }[];
 }
 
 export interface DropCardAction extends RemoteAction<typeof DROP_CARD> {
+  nowHeldBy: CardOwner;
+  drops: {
     cardId: string;
     location: Coordinates;
     zIndex: number;
-    nowHeldBy: CardOwner;
+  }[];
 }
 
 export interface TurnOverCardAction extends RemoteAction<typeof TURN_OVER_CARD> {
@@ -119,12 +123,14 @@ export type DragCardParams = {
 export function dragCard(params: DragCardParams): AppThunkAction<void, DropCardAction> {
   return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
     let cardsToMove = getCardsGroup(getState().cards.cardsById, params.cardId);
-    cardsToMove.forEach(card => {
-      dispatch(moveCard(
-        card.id,
-        Elementwise.map(i => card.location[i] + params.delta[i]),
-      ))
+
+    let moves = cardsToMove.map(card => {
+      return {
+        cardId: card.id,
+        location: Elementwise.map(i => card.location[i] + params.delta[i]),
+      };
     });
+    dispatch(moveCard(moves));
     return Promise.resolve();
   };
 }
@@ -139,11 +145,10 @@ function getCardsGroup(cardsById: { [key: string]: Card; }, cardId: string): Car
   return selectedCards;
 }
 
-export function moveCard(cardId: string, location: Coordinates): MoveCardAction {
+export function moveCard(moves: {cardId: string, location: Coordinates}[]): MoveCardAction {
   return {
     type: MOVE_CARD,
-    cardId: cardId,
-    location: location,
+    moves: moves,
   };
 }
 
@@ -155,28 +160,28 @@ export type ReleaseCardParams = {
 export function releaseCard(params: ReleaseCardParams): AppThunkAction<void, ReleaseCardParams> {
   return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
     let cardsToDrop = getCardsGroup(getState().cards.cardsById, params.cardId);
-    cardsToDrop.forEach(card => {
-      let transformedLocation = new LocationTransformer(card.location, card.heldBy)
-        .transformTo(params.nowHeldBy);
-      dispatch(dropCard(
-        card.id,
-        transformedLocation,
-        card.zIndex,
-        params.nowHeldBy,
-      ));
-    });
+    dispatch(dropCard(
+      params.nowHeldBy,
+      cardsToDrop.map(card => {
+        let transformedLocation = new LocationTransformer(card.location, card.heldBy)
+          .transformTo(params.nowHeldBy);
+        return {
+          cardId: card.id,
+          location: transformedLocation,
+          zIndex: card.zIndex,
+        };
+      }),
+    ));
     return Promise.resolve();
   };
 }
 
-export function dropCard(cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner, remote: boolean = false): DropCardAction {
+export function dropCard(nowHeldBy: CardOwner, drops: {cardId: string, location: Coordinates, zIndex: number}[], remote: boolean = false): DropCardAction {
   return {
     type: DROP_CARD,
     remote: remote,
-    cardId: cardId,
-    location: location,
-    zIndex: zIndex,
     nowHeldBy: nowHeldBy,
+    drops: drops,
   };
 }
 

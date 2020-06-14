@@ -49,7 +49,7 @@ async function movePlayersCardsToTable(
 ) {
   let playersCards = (await getCards(roomId))
     .filter(x => x.heldBy === action.playerId);
-  await asyncForEach(playersCards, async (card, i) => {
+  await Promise.all(playersCards.map(async (card) => {
     if (card.flipCount % 2 === 1) {
       let flipAction = backendTurnCardOverTable(card.cardId);
       await storeCardFlip({
@@ -62,20 +62,22 @@ async function movePlayersCardsToTable(
         flipAction,
       );
     }
-    let dropAction = backendDropCardOnTable(card.cardId);
+  }));
+  let dropAction = backendDropCardOnTable(playersCards.map(x => x.cardId));
+  await Promise.all(dropAction.drops.map(async drop => {
     await storeCardDrop({
       roomId: roomId,
-      cardId: dropAction.cardId,
-      newLocation: dropAction.location,
-      newZIndex: dropAction.zIndex,
+      cardId: drop.cardId,
+      newLocation: drop.location,
+      newZIndex: drop.zIndex,
       newHeldBy: dropAction.nowHeldBy,
     });
-    await pushToConnections(
-      event.requestContext,
-      connections,
-      dropAction,
-    );
-  });
+  }));
+  await pushToConnections(
+    event.requestContext,
+    connections,
+    dropAction,
+  );
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -117,13 +119,15 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let sendToSelf = false;
   switch (action.type) {
     case BACKEND_DROP_CARD:
-      await storeCardDrop({
-        roomId: roomId,
-        cardId: action.cardId,
-        newLocation: action.location,
-        newZIndex: action.zIndex,
-        newHeldBy: action.nowHeldBy,
-      });
+      await Promise.all(action.drops.map(async drop => {
+        await storeCardDrop({
+          roomId: roomId,
+          cardId: drop.cardId,
+          newLocation: drop.location,
+          newZIndex: drop.zIndex,
+          newHeldBy: action.nowHeldBy,
+        });
+      }));
       break;
     case BACKEND_TURN_OVER_CARD:
       await storeCardFlip({

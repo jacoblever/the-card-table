@@ -11,11 +11,13 @@ export const BACKEND_KICK_PLAYER = "KICK_PLAYER";
 
 export interface BackendDropCardAction {
   type: typeof BACKEND_DROP_CARD;
-  cardId: string;
-  location: [number, number];
-  zIndex: number;
-  nowHeldBy: string | null;
   remote: true,
+  nowHeldBy: string | null,
+  drops: {
+    cardId: string,
+    location: [number, number],
+    zIndex: number,
+  }[],
 }
 
 export interface BackendTurnOverCardAction {
@@ -48,14 +50,18 @@ export interface BackendKickPlayerAction {
   playerId: string;
 }
 
-export function backendDropCardOnTable(cardId: string): BackendDropCardAction {
+export function backendDropCardOnTable(cardIds: string[]): BackendDropCardAction {
   return {
     type: BACKEND_DROP_CARD,
-    cardId: cardId,
-    location: [120, 120],
-    zIndex: 0,
-    nowHeldBy: null,
     remote: true,
+    nowHeldBy: null,
+    drops: cardIds.map(x => {
+      return {
+        cardId: x,
+        location: [120, 120],
+        zIndex: 0,
+      };
+    }),
   };
 }
 

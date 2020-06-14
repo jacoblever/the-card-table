@@ -68,8 +68,6 @@ export function CardsReducer(
     case DESELECT_ALL_CARDS:
       return DeselectAllCardsReducer(state);
     case PICK_UP_CARD:
-    case MOVE_CARD:
-    case DROP_CARD:
     case TURN_OVER_CARD:
       let maxZIndexGetter = () => {
         let cards = Object.keys(state.cardsById)
@@ -82,7 +80,6 @@ export function CardsReducer(
           ...cards.map(c => c.zIndex),
         );
       };
-
       return {
         ...state,
         cardsById: {
@@ -92,6 +89,39 @@ export function CardsReducer(
             action,
             maxZIndexGetter,
           ),
+        }
+      };
+    case MOVE_CARD:
+      let moveChanges: { [key: string]: Card; } = {};
+      action.moves.forEach(move => {
+        moveChanges[move.cardId] = {
+          ...state.cardsById[move.cardId],
+          location: move.location,
+        }
+      });
+      return {
+        ...state,
+        cardsById: {
+          ...state.cardsById,
+          ...moveChanges,
+        }
+      };
+    case DROP_CARD:
+      let dropChanges: { [key: string]: Card; } = {};
+      action.drops.forEach(drops => {
+        dropChanges[drops.cardId] = {
+          ...state.cardsById[drops.cardId],
+          location: drops.location,
+          zIndex: drops.zIndex,
+          heldBy: action.nowHeldBy,
+          forceFaceDown: false,
+        }
+      });
+      return {
+        ...state,
+        cardsById: {
+          ...state.cardsById,
+          ...dropChanges,
         }
       };
     default:
@@ -110,19 +140,6 @@ function CardReducer(
         ...state,
         zIndex: maxZIndexGetter() + 1,
         forceFaceDown: action.ensureIdentityStaysHidden,
-      }
-    case MOVE_CARD:
-      return {
-        ...state,
-        location: action.location,
-      };
-    case DROP_CARD:
-      return {
-        ...state,
-        heldBy: action.nowHeldBy,
-        location: action.location,
-        zIndex: action.zIndex,
-        forceFaceDown: false,
       };
     case TURN_OVER_CARD:
       return {

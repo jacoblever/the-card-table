@@ -7,7 +7,6 @@ import 'long-press-event/src/long-press-event'
 import { Suit } from './Suit';
 import './CardComponent.css';
 import { CardOwner, CardOwnerTable, Coordinates } from "./store/state";
-import { LocationTransformer } from "./geometry/locationTransformer";
 
 export type CardProps = {
   id: string,

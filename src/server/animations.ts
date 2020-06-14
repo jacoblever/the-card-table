@@ -32,7 +32,7 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZInde
     .transformTo(card.heldBy);
 
   let dispatchEndState = () => {
-    dispatch(dropCard(card.id, endInFinalOwnersFrame, finalZIndex, nowHeldBy, true));
+    dispatch(dropCard(nowHeldBy, [{cardId: card.id, location: endInFinalOwnersFrame, zIndex: finalZIndex}], true));
   };
 
   let requestAnimationFrameWithOutOfFocusFallback = (func: () => void) => {
@@ -61,7 +61,7 @@ export const animateMoveCard = (card: Card, endLocation: Coordinates, finalZInde
         let end = endInOriginalOwnersFrame;
         return start[i] + stepPercent * stepNumber * (end[i] - start[i]);
       });
-      dispatch(moveCard(card.id, nextLocation));
+      dispatch(moveCard([{cardId: card.id, location: nextLocation}]));
 
       if(stepPercent * stepNumber === 1) {
         dispatchEndState();

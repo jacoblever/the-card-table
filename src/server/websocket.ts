@@ -47,14 +47,17 @@ const socketMiddleware = () => {
     let currentState = store.getState();
     switch (message.type) {
       case DROP_CARD:
-        animateMoveCard(
-          currentState.cards.cardsById[message.cardId],
-          message.location,
-          message.zIndex,
-          message.nowHeldBy,
-          currentState.cards.me,
-          (a: ActionTypes) => store.dispatch(a),
-        )
+        let nowHeldBy = message.nowHeldBy;
+        message.drops.forEach(drop => {
+          animateMoveCard(
+            currentState.cards.cardsById[drop.cardId],
+            drop.location,
+            drop.zIndex,
+            nowHeldBy,
+            currentState.cards.me,
+            (a: ActionTypes) => store.dispatch(a),
+          )
+        });
         break;
       case TURN_OVER_CARD:
         store.dispatch(turnOverCard(message.cardId, true));
@@ -119,17 +122,19 @@ const socketMiddleware = () => {
       let state = store.getState();
       let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
       if(droppedToOtherPlayer) {
-        if(action.location !== [0, 0]) {
-          let card = state.cards.cardsById[action.cardId];
-          animateMoveCard(
-            card,
-            [0, 0],
-            card.zIndex,
-            action.nowHeldBy,
-            state.cards.me,
-            (a: ActionTypes) => store.dispatch(a),
-          );
-        }
+        action.drops.forEach(drop => {
+          if(drop.location !== [0, 0]) {
+            let card = state.cards.cardsById[drop.cardId];
+            animateMoveCard(
+              card,
+              [0, 0],
+              card.zIndex,
+              action.nowHeldBy,
+              state.cards.me,
+              (a: ActionTypes) => store.dispatch(a),
+            );
+          }
+        });
       }
     }
   };
