@@ -8,7 +8,6 @@ import { Suit } from './Suit';
 import './CardComponent.css';
 import { CardOwner, CardOwnerTable, Coordinates } from "./store/state";
 import { LocationTransformer } from "./geometry/locationTransformer";
-import { Elementwise } from "./geometry/elementwise";
 
 export type CardProps = {
   id: string,
@@ -24,8 +23,8 @@ export type CardProps = {
   onTurnOver: () => void,
   onSelectUnder: () => void,
   onPickUp: () => void,
-  onMove: (location: Coordinates) => void,
-  onDrop: (location: Coordinates, zIndex: number, nowHeldBy: CardOwner) => void,
+  onMove: (delta: Coordinates) => void,
+  onDrop: (nowHeldBy: CardOwner) => void,
 }
 
 type CardState = {
@@ -96,16 +95,13 @@ export class CardComponent extends React.Component<CardProps, CardState> {
             this.props.onPickUp();
           },
           move: event => {
-            let delta = [event.dx, event.dy];
-            let newLocation = Elementwise.map(i => this.props.location[i] + delta[i]);
-            this.props.onMove(newLocation);
+            let delta = [event.dx, event.dy] as Coordinates;
+            this.props.onMove(delta);
           },
           end: event => {
             let dropzone = event.dropzone?.target;
             let nowHeldBy = dropzone?.id ?? CardOwnerTable;
-            let transformedLocation = new LocationTransformer(this.props.location, this.props.heldBy)
-              .transformTo(nowHeldBy);
-            this.props.onDrop(transformedLocation, this.props.zIndex, nowHeldBy);
+            this.props.onDrop(nowHeldBy);
           }
         }
       });

@@ -1,4 +1,8 @@
-import { CardOwner, CardState, Coordinates, Player } from "./state";
+import { AppState, Card, CardOwner, CardState, Coordinates, Player } from "./state";
+import { Action, Dispatch } from "redux";
+import { ThunkAction, ThunkDispatch } from "redux-thunk";
+import { Elementwise } from "../geometry/elementwise";
+import { LocationTransformer } from "../geometry/locationTransformer";
 
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
@@ -14,77 +18,75 @@ export const KICK_PLAYER = "KICK_PLAYER";
 export const SELECT_CARDS_UNDER = "SELECT_CARDS_UNDER";
 export const DESELECT_ALL_CARDS = "DESELECT_ALL_CARDS";
 
-interface RemoteAction {
+interface RemoteAction<T> extends Action<T> {
     remote: boolean;
 }
 
-export interface PickUpCardAction extends RemoteAction {
-    type: typeof PICK_UP_CARD;
+export interface PickUpCardAction extends RemoteAction<typeof PICK_UP_CARD> {
     cardId: string;
     ensureIdentityStaysHidden: boolean;
 }
 
-export interface MoveCardAction extends RemoteAction {
-    type: typeof MOVE_CARD;
+export interface MoveCardAction extends Action<typeof MOVE_CARD> {
     cardId: string;
     location: Coordinates;
 }
 
-export interface DropCardAction extends RemoteAction {
-    type: typeof DROP_CARD;
+export interface DropCardAction extends RemoteAction<typeof DROP_CARD> {
     cardId: string;
     location: Coordinates;
     zIndex: number;
     nowHeldBy: CardOwner;
 }
 
-export interface TurnOverCardAction extends RemoteAction {
-    type: typeof TURN_OVER_CARD;
+export interface TurnOverCardAction extends RemoteAction<typeof TURN_OVER_CARD> {
     cardId: string;
 }
 
-export interface ChangeRoomAction {
-    type: typeof CHANGE_ROOM;
+export interface ChangeRoomAction extends Action<typeof CHANGE_ROOM> {
     roomId: string | null;
 }
 
-export interface WsConnectAction {
+export interface WsConnectAction extends Action<typeof WS_CONNECT> {
     type: typeof WS_CONNECT;
 }
 
-export interface WsDisconnectAction {
+export interface WsDisconnectAction extends Action<typeof WS_DISCONNECT> {
     type: typeof WS_DISCONNECT;
 }
 
-export interface InitialCardStateAction {
-  type: typeof INITIAL_CARD_STATE;
+export interface InitialCardStateAction extends Action<typeof INITIAL_CARD_STATE> {
   state: CardState;
 }
 
-export interface PlayersUpdateAction {
-  type: typeof PLAYERS_UPDATE;
+export interface PlayersUpdateAction extends Action<typeof PLAYERS_UPDATE> {
   players: Player[];
 }
 
-export interface NameChangeAction extends RemoteAction {
-  type: typeof NAME_CHANGE;
+export interface NameChangeAction extends RemoteAction<typeof NAME_CHANGE> {
   playerId: string;
   name: string;
 }
 
-export interface KickPlayerAction extends RemoteAction {
-  type: typeof KICK_PLAYER;
+export interface KickPlayerAction extends RemoteAction<typeof KICK_PLAYER> {
   playerId: string;
 }
 
-export interface SelectCardsUnderAction {
-  type: typeof SELECT_CARDS_UNDER;
+export interface SelectCardsUnderAction extends Action<typeof SELECT_CARDS_UNDER> {
   cardId: string;
 }
 
-export interface DeselectAllCardsAction {
-  type: typeof DESELECT_ALL_CARDS;
+export interface DeselectAllCardsAction extends Action<typeof DESELECT_ALL_CARDS> {
 }
+
+
+export type AppThunkAction<TReturnType, TActionParam> = ThunkAction<
+  Promise<TReturnType>,
+  AppState,
+  TActionParam,
+  ActionTypes>
+
+export type AppThunkDispatch = ThunkDispatch<AppState, any, ActionTypes>;
 
 export type ActionTypes = PickUpCardAction
   | MoveCardAction
@@ -100,7 +102,7 @@ export type ActionTypes = PickUpCardAction
   | SelectCardsUnderAction
   | DeselectAllCardsAction;
 
-export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): ActionTypes {
+export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): PickUpCardAction {
   return {
     type: PICK_UP_CARD,
     remote: false,
@@ -109,16 +111,65 @@ export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): A
   };
 }
 
-export function moveCard(cardId: string, location: Coordinates): ActionTypes {
+export type DragCardParams = {
+  cardId: string,
+  delta: Coordinates,
+}
+
+export function dragCard(params: DragCardParams): AppThunkAction<void, DropCardAction> {
+  return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
+    let cardsToMove = getCardsGroup(getState().cards.cardsById, params.cardId);
+    cardsToMove.forEach(card => {
+      dispatch(moveCard(
+        card.id,
+        Elementwise.map(i => card.location[i] + params.delta[i]),
+      ))
+    });
+    return Promise.resolve();
+  };
+}
+
+function getCardsGroup(cardsById: { [key: string]: Card; }, cardId: string): Card[] {
+  let selectedCards = Object.keys(cardsById)
+    .map(id => cardsById[id])
+    .filter(x => x.selected);
+  if (!selectedCards.map(x => x.id).includes(cardId)) {
+    return [cardsById[cardId]];
+  }
+  return selectedCards;
+}
+
+export function moveCard(cardId: string, location: Coordinates): MoveCardAction {
   return {
     type: MOVE_CARD,
-    remote: false,
     cardId: cardId,
     location: location,
   };
 }
 
-export function dropCard(cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner, remote: boolean = false): ActionTypes {
+export type ReleaseCardParams = {
+  cardId: string,
+  nowHeldBy: CardOwner,
+}
+
+export function releaseCard(params: ReleaseCardParams): AppThunkAction<void, ReleaseCardParams> {
+  return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
+    let cardsToDrop = getCardsGroup(getState().cards.cardsById, params.cardId);
+    cardsToDrop.forEach(card => {
+      let transformedLocation = new LocationTransformer(card.location, card.heldBy)
+        .transformTo(params.nowHeldBy);
+      dispatch(dropCard(
+        card.id,
+        transformedLocation,
+        card.zIndex,
+        params.nowHeldBy,
+      ));
+    });
+    return Promise.resolve();
+  };
+}
+
+export function dropCard(cardId: string, location: Coordinates, zIndex: number, nowHeldBy: CardOwner, remote: boolean = false): DropCardAction {
   return {
     type: DROP_CARD,
     remote: remote,
@@ -129,7 +180,7 @@ export function dropCard(cardId: string, location: Coordinates, zIndex: number, 
   };
 }
 
-export function turnOverCard(cardId: string, remote: boolean = false): ActionTypes {
+export function turnOverCard(cardId: string, remote: boolean = false): TurnOverCardAction {
   return {
     type: TURN_OVER_CARD,
     remote: remote,
@@ -137,26 +188,26 @@ export function turnOverCard(cardId: string, remote: boolean = false): ActionTyp
   };
 }
 
-export function changeRoom(roomId: string | null): ActionTypes {
+export function changeRoom(roomId: string | null): ChangeRoomAction {
   return {
     type: CHANGE_ROOM,
     roomId: roomId,
   };
 }
 
-export function wsConnect(): ActionTypes {
+export function wsConnect(): WsConnectAction {
   return {
     type: WS_CONNECT,
   };
 }
 
-export function wsDisconnect(): ActionTypes {
+export function wsDisconnect(): WsDisconnectAction {
   return {
     type: WS_DISCONNECT,
   };
 }
 
-export function nameChange(playerId: string, name: string): ActionTypes {
+export function nameChange(playerId: string, name: string): NameChangeAction {
   return {
     type: NAME_CHANGE,
     remote: false,
@@ -165,7 +216,7 @@ export function nameChange(playerId: string, name: string): ActionTypes {
   };
 }
 
-export function kickPlayer(playerId: string): ActionTypes {
+export function kickPlayer(playerId: string): KickPlayerAction {
   return {
     type: KICK_PLAYER,
     playerId: playerId,
@@ -173,14 +224,14 @@ export function kickPlayer(playerId: string): ActionTypes {
   };
 }
 
-export function selectCardsUnder(cardId: string): ActionTypes {
+export function selectCardsUnder(cardId: string): SelectCardsUnderAction {
   return {
     type: SELECT_CARDS_UNDER,
     cardId: cardId,
   };
 }
 
-export function deselectAllCards(): ActionTypes {
+export function deselectAllCards(): DeselectAllCardsAction {
   return {
     type: DESELECT_ALL_CARDS,
   };
