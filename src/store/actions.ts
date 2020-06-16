@@ -3,6 +3,7 @@ import { Action, Dispatch } from "redux";
 import { ThunkAction, ThunkDispatch } from "redux-thunk";
 import { Elementwise } from "../geometry/elementwise";
 import { LocationTransformer } from "../geometry/locationTransformer";
+import { animateDropCard } from "../server/animations";
 
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
@@ -154,11 +155,11 @@ export function dragCard(params: DragCardParams): AppThunkAction<void, DropCardA
   };
 }
 
-function getCardsGroup(cardsById: { [key: string]: Card; }, cardId: string): Card[] {
+function getCardsGroup(cardsById: { [key: string]: Card; }, cardId: string | null = null): Card[] {
   let selectedCards = Object.keys(cardsById)
     .map(id => cardsById[id])
     .filter(x => x.selected);
-  if (!selectedCards.map(x => x.id).includes(cardId)) {
+  if (cardId && !selectedCards.map(x => x.id).includes(cardId)) {
     return [cardsById[cardId]];
   }
   return selectedCards;
@@ -282,4 +283,48 @@ export function deselectAllCards(): DeselectAllCardsAction {
   return {
     type: DESELECT_ALL_CARDS,
   };
+}
+
+export function shuffleSelectedCards(): AppThunkAction<void, null> {
+  return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
+    let cards = getCardsGroup(getState().cards.cardsById);
+    let newLocation = meanLocation(cards);
+    let zIndexes = cards.map(x => x.zIndex)
+      .sort(x => Math.random() - 0.5);
+
+    await dispatch(animateDropCard(dropCard(
+      cards[0].heldBy,
+      cards.map((x, i) => {
+        return {
+          cardId: x.id,
+          location: newLocation,
+          zIndex: zIndexes[i],
+        };
+      }),
+    )));
+  }
+}
+
+function meanLocation(cards: Card[]) {
+  return Elementwise.map(i => {
+    let sum = cards.map(x => x.location[i]).reduce((a, x) => a + x);
+    return Math.round(sum / cards.length);
+  });
+}
+
+export function tidySelectedCards(): AppThunkAction<void, null> {
+  return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
+    let cards = getCardsGroup(getState().cards.cardsById);
+    let newLocation = meanLocation(cards);
+    await dispatch(animateDropCard(dropCard(
+      cards[0].heldBy,
+      cards.map(x => {
+        return {
+          cardId: x.id,
+          location: newLocation,
+          zIndex: x.zIndex,
+        };
+      }),
+    )));
+  }
 }

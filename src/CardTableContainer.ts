@@ -11,6 +11,7 @@ const mapStateToProps = (state: AppState, ownProps: {}) => ({
     .filter(card => card.heldBy === CardOwnerTable),
   players: state.cards.players,
   me: state.cards.me,
+  showToolbar: state.cards.selectionActive,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: {}) => ({

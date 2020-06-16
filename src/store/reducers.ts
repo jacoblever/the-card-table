@@ -43,6 +43,7 @@ export function CardsReducer(
       cardsById: {},
       players: [],
       me: "a",
+      selectionActive: false,
     };
   }
 

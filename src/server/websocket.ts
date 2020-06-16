@@ -1,10 +1,10 @@
 import { Dispatch, Store } from "redux";
 import Cookies from "js-cookie"
 import { AppState, CardOwnerTable } from "../store/state";
-import { animateMoveCard } from "./animations";
+import { animateDropCard } from "./animations";
 import {
-  ActionTypes,
-  DROP_CARD,
+  ActionTypes, AppThunkDispatch,
+  DROP_CARD, dropCard,
   INITIAL_CARD_STATE,
   KICK_PLAYER,
   NAME_CHANGE,
@@ -42,22 +42,10 @@ const socketMiddleware = () => {
 
   const onMessage = (store: Store<AppState, ActionTypes>) => (event: MessageEvent) => {
     let message = JSON.parse(event.data) as ActionTypes;
-    let currentState = store.getState();
     switch (message.type) {
       case DROP_CARD:
-        animateMoveCard({
-          me: currentState.cards.me,
-          nowHeldBy: message.nowHeldBy,
-          drops: message.drops.map(drop => {
-            let card = currentState.cards.cardsById[drop.cardId];
-            return {
-              card: card,
-              endLocation: drop.location,
-              finalZIndex: drop.zIndex,
-              turnOver: drop.turnOver,
-            };
-          })
-        }, (a: ActionTypes) => store.dispatch(a));
+        let thunkDispatch = store.dispatch as AppThunkDispatch;
+        thunkDispatch(animateDropCard(message));
         break;
       case INITIAL_CARD_STATE:
         let roomId = store.getState().roomId;
@@ -118,20 +106,22 @@ const socketMiddleware = () => {
       let state = store.getState();
       let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
       if(droppedToOtherPlayer) {
-
-        animateMoveCard({
-          me: state.cards.me,
-          nowHeldBy: action.nowHeldBy,
-          drops: action.drops.map(drop => {
-            let card = state.cards.cardsById[drop.cardId];
-            return {
-              card: card,
-              endLocation: [0, 0],
-              finalZIndex: card.zIndex,
-              turnOver: false,
-            };
-          })
-        }, (a: ActionTypes) => store.dispatch(a));
+        let thunkDispatch = store.dispatch as AppThunkDispatch;
+        thunkDispatch(animateDropCard(
+          dropCard(
+            action.nowHeldBy,
+            action.drops.map(drop => {
+              let card = state.cards.cardsById[drop.cardId];
+              return {
+                cardId: card.id,
+                location: [0, 0],
+                zIndex: card.zIndex,
+                turnOver: false,
+              };
+            }),
+            true,
+          ),
+        ));
       }
     }
   };

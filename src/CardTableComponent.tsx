@@ -5,11 +5,13 @@ import { CardContainer } from './CardContainer';
 import { Card, Player } from './store/state';
 import HandContainer from "./HandContainer";
 import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
+import { ToolbarContainer } from "./ToolbarContainer";
 
 type CardTableProps = {
   cards: Card[],
   players: Player[],
   me: string,
+  showToolbar: boolean,
   
   onMount: () => void,
   onUnmount: () => void,
@@ -97,6 +99,8 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
   render() {
     return (
       <div className="table" id="card-table" onClick={(e) => this.onClick(e)}>
+        {this.renderToolbar()}
+        
         {this.renderOtherPlayers()}
 
         {this.renderCards()}
@@ -112,6 +116,12 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
       return;
     }
     return this.props.onDeselectAllCards();
+  }
+
+  private renderToolbar() {
+    if(this.props.showToolbar) {
+      return <ToolbarContainer />
+    }
   }
 }
 

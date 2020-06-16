@@ -9,6 +9,7 @@ export interface CardState {
   cardsById: { [key: string]: Card; };
   players: Player[];
   me: string;
+  selectionActive: boolean;
 }
 
 export interface Player {

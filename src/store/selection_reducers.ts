@@ -50,7 +50,10 @@ export function SelectCardsUnderReducer(
   let selectAll = cardClicked.selected;
 
   let clickedIndex = cardsToSelect.map(x => x.id).indexOf(cardClicked.id);
-  let newState: CardState = {...state};
+  let newState: CardState = {
+    ...state,
+    selectionActive: cardsToSelect.length > 0,
+  };
   newState.cardsById[cardClicked.id] = {...cardClicked, selected: true};
 
   for(let i = clickedIndex + 1; i < cardsToSelect.length; i++) {
@@ -77,7 +80,10 @@ export function DeselectAllCardsReducer(
   state: CardState,
 ): CardState {
 
-  let newState: CardState = {...state};
+  let newState: CardState = {
+    ...state,
+    selectionActive: false,
+  };
   Object.values(state.cardsById)
     .forEach(card => {
       if(card.selected) {
