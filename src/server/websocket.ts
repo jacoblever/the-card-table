@@ -9,8 +9,6 @@ import {
   KICK_PLAYER,
   NAME_CHANGE,
   PLAYERS_UPDATE,
-  TURN_OVER_CARD,
-  turnOverCard,
   WS_CONNECT,
   WS_DISCONNECT
 } from "../store/actions";
@@ -47,20 +45,19 @@ const socketMiddleware = () => {
     let currentState = store.getState();
     switch (message.type) {
       case DROP_CARD:
-        let nowHeldBy = message.nowHeldBy;
-        message.drops.forEach(drop => {
-          animateMoveCard(
-            currentState.cards.cardsById[drop.cardId],
-            drop.location,
-            drop.zIndex,
-            nowHeldBy,
-            currentState.cards.me,
-            (a: ActionTypes) => store.dispatch(a),
-          )
-        });
-        break;
-      case TURN_OVER_CARD:
-        store.dispatch(turnOverCard(message.cardId, true));
+        animateMoveCard({
+          me: currentState.cards.me,
+          nowHeldBy: message.nowHeldBy,
+          drops: message.drops.map(drop => {
+            let card = currentState.cards.cardsById[drop.cardId];
+            return {
+              card: card,
+              endLocation: drop.location,
+              finalZIndex: drop.zIndex,
+              turnOver: drop.turnOver,
+            };
+          })
+        }, (a: ActionTypes) => store.dispatch(a));
         break;
       case INITIAL_CARD_STATE:
         let roomId = store.getState().roomId;
@@ -97,7 +94,6 @@ const socketMiddleware = () => {
         console.log('websocket closed');
         break;
       case DROP_CARD:
-      case TURN_OVER_CARD:
       case NAME_CHANGE:
       case KICK_PLAYER:
         if (socket === null || socket.readyState !== WebSocket.OPEN || action.remote) {
@@ -122,19 +118,20 @@ const socketMiddleware = () => {
       let state = store.getState();
       let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
       if(droppedToOtherPlayer) {
-        action.drops.forEach(drop => {
-          if(drop.location !== [0, 0]) {
+
+        animateMoveCard({
+          me: state.cards.me,
+          nowHeldBy: action.nowHeldBy,
+          drops: action.drops.map(drop => {
             let card = state.cards.cardsById[drop.cardId];
-            animateMoveCard(
-              card,
-              [0, 0],
-              card.zIndex,
-              action.nowHeldBy,
-              state.cards.me,
-              (a: ActionTypes) => store.dispatch(a),
-            );
-          }
-        });
+            return {
+              card: card,
+              endLocation: [0, 0],
+              finalZIndex: card.zIndex,
+              turnOver: false,
+            };
+          })
+        }, (a: ActionTypes) => store.dispatch(a));
       }
     }
   };

@@ -7,7 +7,6 @@ import { LocationTransformer } from "../geometry/locationTransformer";
 export const PICK_UP_CARD = "PICK_UP_CARD";
 export const MOVE_CARD = "MOVE_CARD";
 export const DROP_CARD = "DROP_CARD";
-export const TURN_OVER_CARD = "TURN_OVER_CARD";
 export const CHANGE_ROOM = "CHANGE_ROOM";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
@@ -23,8 +22,10 @@ interface RemoteAction<T> extends Action<T> {
 }
 
 export interface PickUpCardAction extends RemoteAction<typeof PICK_UP_CARD> {
+  pickUps: {
     cardId: string;
     ensureIdentityStaysHidden: boolean;
+  }[];
 }
 
 export interface MoveCardAction extends Action<typeof MOVE_CARD> {
@@ -40,11 +41,8 @@ export interface DropCardAction extends RemoteAction<typeof DROP_CARD> {
     cardId: string;
     location: Coordinates;
     zIndex: number;
+    turnOver: boolean,
   }[];
-}
-
-export interface TurnOverCardAction extends RemoteAction<typeof TURN_OVER_CARD> {
-    cardId: string;
 }
 
 export interface ChangeRoomAction extends Action<typeof CHANGE_ROOM> {
@@ -95,7 +93,6 @@ export type AppThunkDispatch = ThunkDispatch<AppState, any, ActionTypes>;
 export type ActionTypes = PickUpCardAction
   | MoveCardAction
   | DropCardAction
-  | TurnOverCardAction
   | ChangeRoomAction
   | WsConnectAction
   | WsDisconnectAction
@@ -106,12 +103,34 @@ export type ActionTypes = PickUpCardAction
   | SelectCardsUnderAction
   | DeselectAllCardsAction;
 
-export function pickUpCard(cardId: string, ensureIdentityStaysHidden = false): PickUpCardAction {
+export type GrabCardParams = {
+  cardId: string,
+}
+
+export function grabCard(params: GrabCardParams): AppThunkAction<void, GrabCardParams> {
+  return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
+    let cardsToPickUp = getCardsGroup(getState().cards.cardsById, params.cardId);
+
+    let pickUps = cardsToPickUp.map(card => {
+      return {
+        cardId: card.id,
+      };
+    });
+    dispatch(pickUpCard(pickUps));
+    return Promise.resolve();
+  };
+}
+
+export function pickUpCard(pickUps: {cardId: string, ensureIdentityStaysHidden?: boolean}[]): PickUpCardAction {
   return {
     type: PICK_UP_CARD,
     remote: false,
-    cardId: cardId,
-    ensureIdentityStaysHidden: ensureIdentityStaysHidden,
+    pickUps: pickUps.map(x => {
+      return {
+        cardId: x.cardId,
+        ensureIdentityStaysHidden: x.ensureIdentityStaysHidden ?? false,
+      }
+    }),
   };
 }
 
@@ -176,20 +195,43 @@ export function releaseCard(params: ReleaseCardParams): AppThunkAction<void, Rel
   };
 }
 
-export function dropCard(nowHeldBy: CardOwner, drops: {cardId: string, location: Coordinates, zIndex: number}[], remote: boolean = false): DropCardAction {
+export type FlipCardParams = {
+  cardId: string,
+}
+
+export function flipCard(params: FlipCardParams): AppThunkAction<void, FlipCardParams> {
+  return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
+    let cardsToFlip = getCardsGroup(getState().cards.cardsById, params.cardId);
+    cardsToFlip.sort((a, b) => a.zIndex - b.zIndex);
+
+    dispatch(dropCard(
+      cardsToFlip[0].heldBy,
+      cardsToFlip.map((card, i) => {
+        return {
+          cardId: card.id,
+          location: card.location,
+          zIndex: cardsToFlip[cardsToFlip.length - 1 - i].zIndex,
+          turnOver: true,
+        };
+      }),
+    ));
+    return Promise.resolve();
+  };
+}
+
+export function dropCard(nowHeldBy: CardOwner, drops: {cardId: string, location: Coordinates, zIndex: number, turnOver?: boolean}[], remote: boolean = false): DropCardAction {
   return {
     type: DROP_CARD,
     remote: remote,
     nowHeldBy: nowHeldBy,
-    drops: drops,
-  };
-}
-
-export function turnOverCard(cardId: string, remote: boolean = false): TurnOverCardAction {
-  return {
-    type: TURN_OVER_CARD,
-    remote: remote,
-    cardId: cardId,
+    drops: drops.map(x => {
+      return {
+        cardId: x.cardId,
+        location: x.location,
+        zIndex: x.zIndex,
+        turnOver: x.turnOver ?? false,
+      }
+    }),
   };
 }
 

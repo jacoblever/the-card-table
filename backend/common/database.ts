@@ -1,5 +1,6 @@
 import { getLambdaEnv } from "./env";
 import { DynamoDB } from 'aws-sdk';
+import { DocumentClient } from "aws-sdk/lib/dynamodb/document_client";
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
@@ -195,10 +196,11 @@ type CardDrop = {
   newLocation: [number, number];
   newZIndex: number;
   newHeldBy: string | null;
+  turnOver?: boolean;
 }
 
 export const storeCardDrop = async (cardDrop: CardDrop) => {
-  await ddb.update({
+  let params: DocumentClient.UpdateItemInput = {
     TableName: getLambdaEnv().CardsTableName,
     Key: {
       roomId: cardDrop.roomId,
@@ -212,27 +214,13 @@ export const storeCardDrop = async (cardDrop: CardDrop) => {
       ':newHeldBy': cardDrop.newHeldBy,
       ':newLocation': cardDrop.newLocation,
       ':newZIndex': cardDrop.newZIndex,
-    }
-  }).promise();
-};
-
-type CardFlip = {
-  roomId: string;
-  cardId: string;
-}
-
-export const storeCardFlip = async (cardFlip: CardFlip) => {
-  await ddb.update({
-    TableName: getLambdaEnv().CardsTableName,
-    Key: {
-      roomId: cardFlip.roomId,
-      cardId: cardFlip.cardId,
     },
-    UpdateExpression: 'add flipCount :one',
-    ExpressionAttributeValues: {
-      ':one': 1,
-    }
-  }).promise();
+  };
+  if(cardDrop.turnOver) {
+    params.UpdateExpression += ' add flipCount :one';
+    params.ExpressionAttributeValues[':one'] = 1;
+  }
+  await ddb.update(params).promise();
 };
 
 type RenamePlayer = {

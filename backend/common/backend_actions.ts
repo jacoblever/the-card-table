@@ -2,7 +2,6 @@ import { BackendCardState, BackendPlayer, databaseToBackendPlayer } from "./back
 import { DbConnection, DbPlayer } from "./database";
 
 export const BACKEND_DROP_CARD = "DROP_CARD";
-export const BACKEND_TURN_OVER_CARD = "TURN_OVER_CARD";
 export const BACKEND_GET_INITIAL_STATE = "GET_INITIAL_STATE";
 export const BACKEND_INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const BACKEND_PLAYERS_UPDATE = "PLAYERS_UPDATE";
@@ -17,12 +16,8 @@ export interface BackendDropCardAction {
     cardId: string,
     location: [number, number],
     zIndex: number,
+    turnOver: boolean,
   }[],
-}
-
-export interface BackendTurnOverCardAction {
-  type: typeof BACKEND_TURN_OVER_CARD;
-  cardId: string;
 }
 
 export interface BackendGetInitialStateAction {
@@ -50,25 +45,19 @@ export interface BackendKickPlayerAction {
   playerId: string;
 }
 
-export function backendDropCardOnTable(cardIds: string[]): BackendDropCardAction {
+export function backendDropCardOnTable(cards: {cardId: string, turnOver?: boolean}[]): BackendDropCardAction {
   return {
     type: BACKEND_DROP_CARD,
     remote: true,
     nowHeldBy: null,
-    drops: cardIds.map(x => {
+    drops: cards.map(x => {
       return {
-        cardId: x,
+        cardId: x.cardId,
         location: [120, 120],
         zIndex: 0,
+        turnOver: x.turnOver,
       };
     }),
-  };
-}
-
-export function backendTurnCardOverTable(cardId: string): BackendTurnOverCardAction {
-  return {
-    type: BACKEND_TURN_OVER_CARD,
-    cardId: cardId,
   };
 }
 
@@ -83,7 +72,6 @@ export function backendPlayersUpdate(players: DbPlayer[], connections: DbConnect
 }
 
 export type BackendActionTypes = BackendDropCardAction
-  | BackendTurnOverCardAction
   | BackendGetInitialStateAction
   | BackendInitialCardStateAction
   | BackendPlayersUpdateAction

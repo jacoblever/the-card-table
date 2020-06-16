@@ -1,10 +1,8 @@
 import { connect } from 'react-redux'
 
 import {
-  pickUpCard,
-  turnOverCard,
   selectCardsUnder,
-  dragCard, AppThunkDispatch, releaseCard,
+  dragCard, AppThunkDispatch, releaseCard, grabCard, flipCard,
 } from './store/actions'
 
 import { AppState, CardOwner, Coordinates } from "./store/state";
@@ -30,9 +28,9 @@ const mapStateToProps = (state: AppState, ownProps: Props) => {
 };
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch, ownProps: Props) => ({
-  onTurnOver: () => dispatch(turnOverCard(ownProps.id)),
+  onTurnOver: () => dispatch(flipCard({cardId: ownProps.id})),
   onSelectUnder: () => dispatch(selectCardsUnder(ownProps.id)),
-  onPickUp: () => dispatch(pickUpCard(ownProps.id)),
+  onPickUp: () => dispatch(grabCard({cardId: ownProps.id})),
   onMove: (delta: Coordinates) => dispatch(dragCard({cardId: ownProps.id, delta: delta})),
   onDrop: (nowHeldBy: CardOwner) => dispatch(releaseCard({cardId: ownProps.id, nowHeldBy: nowHeldBy})),
 });

@@ -19,16 +19,14 @@ import {
   getPlayers, markConnectionReadyForActions,
   renamePlayer,
   storeCardDrop,
-  storeCardFlip
 } from "../common/database";
 import {
   BACKEND_DROP_CARD,
   BACKEND_GET_INITIAL_STATE,
   BACKEND_INITIAL_CARD_STATE, BACKEND_KICK_PLAYER,
   BACKEND_NAME_CHANGE,
-  BACKEND_TURN_OVER_CARD,
   BackendActionTypes, backendDropCardOnTable,
-  BackendInitialCardStateAction, BackendKickPlayerAction, backendPlayersUpdate, backendTurnCardOverTable
+  BackendInitialCardStateAction, BackendKickPlayerAction, backendPlayersUpdate
 } from "../common/backend_actions";
 
 async function asyncForEach<T>(array: T[], callback: (item: T, index: number, array: T[]) => void) {
@@ -49,21 +47,12 @@ async function movePlayersCardsToTable(
 ) {
   let playersCards = (await getCards(roomId))
     .filter(x => x.heldBy === action.playerId);
-  await Promise.all(playersCards.map(async (card) => {
-    if (card.flipCount % 2 === 1) {
-      let flipAction = backendTurnCardOverTable(card.cardId);
-      await storeCardFlip({
-        roomId: roomId,
-        cardId: flipAction.cardId,
-      });
-      await pushToConnections(
-        event.requestContext,
-        connections,
-        flipAction,
-      );
-    }
+  let dropAction = backendDropCardOnTable(playersCards.map(x => {
+    return {
+      cardId: x.cardId,
+      turnOver: x.flipCount % 2 === 1,
+    };
   }));
-  let dropAction = backendDropCardOnTable(playersCards.map(x => x.cardId));
   await Promise.all(dropAction.drops.map(async drop => {
     await storeCardDrop({
       roomId: roomId,
@@ -126,14 +115,9 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
           newLocation: drop.location,
           newZIndex: drop.zIndex,
           newHeldBy: action.nowHeldBy,
+          turnOver: drop.turnOver,
         });
       }));
-      break;
-    case BACKEND_TURN_OVER_CARD:
-      await storeCardFlip({
-        roomId: roomId,
-        cardId: action.cardId,
-      });
       break;
     case BACKEND_NAME_CHANGE:
       await renamePlayer({
