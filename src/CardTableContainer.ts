@@ -12,6 +12,7 @@ const mapStateToProps = (state: AppState, ownProps: {}) => ({
   players: state.cards.players,
   me: state.cards.me,
   showToolbar: state.cards.selectionActive,
+  webSocketDisconnected: state.cards.webSocketDisconnected,
 });
 
 const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: {}) => ({

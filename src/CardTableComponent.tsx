@@ -6,12 +6,14 @@ import { Card, Player } from './store/state';
 import HandContainer from "./HandContainer";
 import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
 import { ToolbarContainer } from "./ToolbarContainer";
+import { ModalComponent } from "./ModalComponent";
 
 type CardTableProps = {
   cards: Card[],
   players: Player[],
   me: string,
   showToolbar: boolean,
+  webSocketDisconnected: boolean;
   
   onMount: () => void,
   onUnmount: () => void,
@@ -104,7 +106,11 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
         {this.renderOtherPlayers()}
 
         {this.renderCards()}
-
+        
+        {this.props.webSocketDisconnected && (<ModalComponent closable={false}>
+          You're connection has been disconnected, please <a href={window.location.href}>reload the page</a> to reconnect.
+        </ModalComponent>)}
+        
         <HandContainer player={this.getPlayersInOrderWithMeFirst()[0]} />
       </div>
     );
@@ -113,6 +119,11 @@ class CardTableComponent extends React.Component<CardTableProps, {}> {
   private onClick(event: React.MouseEvent<HTMLDivElement>): void {
     let cardElement = (event.target as Element).closest(".card");
     if(cardElement && cardElement.classList.contains("selected")) {
+      return;
+    }
+
+    let toolbarElement = (event.target as Element).closest(".toolbar");
+    if(toolbarElement) {
       return;
     }
     return this.props.onDeselectAllCards();

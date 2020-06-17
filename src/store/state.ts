@@ -6,10 +6,12 @@ export interface AppState {
 }
 
 export interface CardState {
+  webSocketDisconnected: boolean;
+  me: string;
   cardsById: { [key: string]: Card; };
   players: Player[];
-  me: string;
   selectionActive: boolean;
+  showDealModal: boolean;
 }
 
 export interface Player {

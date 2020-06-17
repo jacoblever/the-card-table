@@ -10,7 +10,7 @@ import {
   NAME_CHANGE,
   PLAYERS_UPDATE,
   WS_CONNECT,
-  WS_DISCONNECT
+  WS_DISCONNECT, wsDisconnected
 } from "../store/actions";
 
 function getWebSocketPath(roomId: string) {
@@ -38,6 +38,7 @@ const socketMiddleware = () => {
 
   const onClose = (store: Store<AppState, ActionTypes>) => (event: CloseEvent) => {
     console.log('websocket closed');
+    store.dispatch(wsDisconnected());
   };
 
   const onMessage = (store: Store<AppState, ActionTypes>) => (event: MessageEvent) => {

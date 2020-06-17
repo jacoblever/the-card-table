@@ -11,12 +11,15 @@ export const DROP_CARD = "DROP_CARD";
 export const CHANGE_ROOM = "CHANGE_ROOM";
 export const WS_CONNECT = "WS_CONNECT";
 export const WS_DISCONNECT = "WS_DISCONNECT";
+export const WS_DISCONNECTED = "WS_DISCONNECTED";
 export const INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const PLAYERS_UPDATE = "PLAYERS_UPDATE";
 export const NAME_CHANGE = "NAME_CHANGE";
 export const KICK_PLAYER = "KICK_PLAYER";
 export const SELECT_CARDS_UNDER = "SELECT_CARDS_UNDER";
 export const DESELECT_ALL_CARDS = "DESELECT_ALL_CARDS";
+export const OPEN_DEAL_MODAL = "OPEN_DEAL_MODAL";
+export const CLOSE_DEAL_MODAL = "CLOSE_DEAL_MODAL";
 
 interface RemoteAction<T> extends Action<T> {
     remote: boolean;
@@ -58,6 +61,10 @@ export interface WsDisconnectAction extends Action<typeof WS_DISCONNECT> {
     type: typeof WS_DISCONNECT;
 }
 
+export interface WsDisconnectedAction extends Action<typeof WS_DISCONNECTED> {
+    type: typeof WS_DISCONNECTED;
+}
+
 export interface InitialCardStateAction extends Action<typeof INITIAL_CARD_STATE> {
   state: CardState;
 }
@@ -82,6 +89,12 @@ export interface SelectCardsUnderAction extends Action<typeof SELECT_CARDS_UNDER
 export interface DeselectAllCardsAction extends Action<typeof DESELECT_ALL_CARDS> {
 }
 
+export interface OpenDealModalAction extends Action<typeof OPEN_DEAL_MODAL> {
+}
+
+export interface CloseDealModalAction extends Action<typeof CLOSE_DEAL_MODAL> {
+}
+
 
 export type AppThunkAction<TReturnType, TActionParam> = ThunkAction<
   Promise<TReturnType>,
@@ -97,12 +110,15 @@ export type ActionTypes = PickUpCardAction
   | ChangeRoomAction
   | WsConnectAction
   | WsDisconnectAction
+  | WsDisconnectedAction
   | InitialCardStateAction
   | PlayersUpdateAction
   | NameChangeAction
   | KickPlayerAction
   | SelectCardsUnderAction
-  | DeselectAllCardsAction;
+  | DeselectAllCardsAction
+  | OpenDealModalAction
+  | CloseDealModalAction;
 
 export type GrabCardParams = {
   cardId: string,
@@ -255,6 +271,12 @@ export function wsDisconnect(): WsDisconnectAction {
   };
 }
 
+export function wsDisconnected(): WsDisconnectedAction {
+  return {
+    type: WS_DISCONNECTED,
+  };
+}
+
 export function nameChange(playerId: string, name: string): NameChangeAction {
   return {
     type: NAME_CHANGE,
@@ -282,6 +304,18 @@ export function selectCardsUnder(cardId: string): SelectCardsUnderAction {
 export function deselectAllCards(): DeselectAllCardsAction {
   return {
     type: DESELECT_ALL_CARDS,
+  };
+}
+
+export function openDealModal(): OpenDealModalAction {
+  return {
+    type: OPEN_DEAL_MODAL,
+  };
+}
+
+export function closeDealModal(): CloseDealModalAction {
+  return {
+    type: CLOSE_DEAL_MODAL,
   };
 }
 
@@ -314,17 +348,73 @@ function meanLocation(cards: Card[]) {
 
 export function tidySelectedCards(): AppThunkAction<void, null> {
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
-    let cards = getCardsGroup(getState().cards.cardsById);
+    let cards = getCardsGroup(getState().cards.cardsById)
+      .sort((a, b) => a.zIndex - b.zIndex);
     let newLocation = meanLocation(cards);
+    let offset = 0.2;
     await dispatch(animateDropCard(dropCard(
       cards[0].heldBy,
-      cards.map(x => {
+      cards.map((x, i) => {
         return {
           cardId: x.id,
-          location: newLocation,
+          location: [
+            newLocation[0] + offset*i - cards.length*offset/2,
+            newLocation[1] - offset*i + cards.length*offset/2
+          ],
           zIndex: x.zIndex,
         };
       }),
     )));
+  }
+}
+
+type DealCardsParams = {
+  numberToEachPlayer: number,
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function getPlayersInOrderWithMeLast(players: Player[], me: string): Player[] {
+  let result = [];
+  let index = players.findIndex(x => x.id === me);
+  for (let i = 0; i < players.length; i++) {
+    let indexToAdd = (i + index + 1) % players.length;
+    result.push(players[indexToAdd]);
+  }
+  return result;
+}
+
+export function dealCards(params: DealCardsParams): AppThunkAction<void, DealCardsParams> {
+  return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
+    let state = getState();
+    await dispatch(closeDealModal());
+    let cards = getCardsGroup(state.cards.cardsById);
+    cards.sort((a, b) => b.zIndex - a.zIndex);
+    let players = getPlayersInOrderWithMeLast(state.cards.players, state.cards.me);
+    await dispatch(deselectAllCards());
+
+    let cardIndex = 0;
+
+    for (let i = 0; i < params.numberToEachPlayer; i++) {
+      for (let j = 0; j < players.length; j++) {
+        let player = players[j];
+        if(cardIndex >= cards.length) {
+          break;
+        }
+        await dispatch(animateDropCard(dropCard(
+          player.id,
+          [{
+            cardId: cards[cardIndex].id,
+            location: player.id === state.cards.me ? [150, 10] : [0, 0],
+            zIndex: cards[cardIndex].zIndex,
+          }],
+        )));
+        await sleep(400);
+        cardIndex++;
+      }
+      await sleep(300);
+    }
   }
 }

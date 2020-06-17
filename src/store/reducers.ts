@@ -1,15 +1,18 @@
 import { Card, CardState } from "./state";
 import {
   ActionTypes,
+  CHANGE_ROOM,
+  CLOSE_DEAL_MODAL,
   DESELECT_ALL_CARDS,
   DROP_CARD,
   INITIAL_CARD_STATE,
-  CHANGE_ROOM,
   MOVE_CARD,
   NAME_CHANGE,
+  OPEN_DEAL_MODAL,
   PICK_UP_CARD,
   PLAYERS_UPDATE,
   SELECT_CARDS_UNDER,
+  WS_DISCONNECTED,
 } from "./actions";
 import { DeselectAllCardsReducer, SelectCardsUnderReducer } from "./selection_reducers";
 
@@ -40,16 +43,23 @@ export function CardsReducer(
 ): CardState {
   if (state === undefined) {
     state = {
+      webSocketDisconnected: false,
       cardsById: {},
       players: [],
       me: "a",
       selectionActive: false,
+      showDealModal: false,
     };
   }
 
   switch (action.type) {
     case INITIAL_CARD_STATE:
       return action.state;
+    case WS_DISCONNECTED:
+      return {
+        ...state,
+        webSocketDisconnected: true,
+      }
     case PLAYERS_UPDATE:
       return {
         ...state,
@@ -67,6 +77,16 @@ export function CardsReducer(
       return SelectCardsUnderReducer(state, action);
     case DESELECT_ALL_CARDS:
       return DeselectAllCardsReducer(state);
+    case OPEN_DEAL_MODAL:
+      return {
+        ...state,
+        showDealModal: true,
+      };
+    case CLOSE_DEAL_MODAL:
+      return {
+        ...state,
+        showDealModal: false,
+      };
     case PICK_UP_CARD:
       let pickUpChanges: { [key: string]: Card; } = {};
       let maxZIndexGetter = () => {

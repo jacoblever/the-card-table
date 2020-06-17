@@ -53,17 +53,24 @@ export function animateDropCard(dropCardAction: DropCardAction): AppThunkAction<
         .transformTo(card.heldBy);
       return {
         card: card,
+        drop: drop,
         cardIdentitySecret: !card.faceUp || ![CardOwnerTable, me].includes(card.heldBy),
         startInOriginalOwnersFrame: card.location,
         endInFinalOwnersFrame: endInFinalOwnersFrame,
         endInOriginalOwnersFrame: endInOriginalOwnersFrame,
-        finalZIndex: drop.zIndex,
-        turnOver: drop.turnOver,
       };
     });
 
     let dispatchEndState = () => {
-      dispatch(dropCardAction);
+      dispatch({
+        ...dropCardAction,
+        drops: animationDetails.map(d => {
+          return {
+            ...d.drop,
+            location: d.endInFinalOwnersFrame,
+          }
+        }),
+      });
     }
 
     let animationStep = () => {
