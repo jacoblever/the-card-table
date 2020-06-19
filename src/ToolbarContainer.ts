@@ -13,6 +13,7 @@ import { dealCards, shuffleSelectedCards, tidySelectedCards } from "./store/acti
 
 const mapStateToProps = (state: AppState, ownProps: {}) => ({
   showDealModal: state.room.dealModal.show,
+  defaultNumberToEachPlayer: state.room.dealModal.defaultDealNumber,
 });
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch, ownProps: {}) => ({

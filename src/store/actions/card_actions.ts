@@ -102,6 +102,18 @@ export function openDealModal(): OpenDealModalAction {
   };
 }
 
+export const SET_DEFAULT_DEAL_NUMBER = "SET_DEFAULT_DEAL_NUMBER";
+export interface SetDefaultDealNumberAction extends Action<typeof SET_DEFAULT_DEAL_NUMBER> {
+  defaultDealNumber: number,
+}
+
+export function setDefaultDealNumber(defaultDealNumber: number): SetDefaultDealNumberAction {
+  return {
+    type: SET_DEFAULT_DEAL_NUMBER,
+    defaultDealNumber: defaultDealNumber,
+  };
+}
+
 export const CLOSE_DEAL_MODAL = "CLOSE_DEAL_MODAL";
 export interface CloseDealModalAction extends Action<typeof CLOSE_DEAL_MODAL> {
 }
@@ -119,5 +131,6 @@ export type CardActions = PickUpCardsAction
   | SelectCardsUnderAction
   | DeselectAllCardsAction
   | OpenDealModalAction
+  | SetDefaultDealNumberAction
   | CloseDealModalAction;
 

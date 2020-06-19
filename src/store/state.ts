@@ -19,6 +19,7 @@ export interface ConnectionState {
 
 export interface DealModalState {
   show: boolean;
+  defaultDealNumber: number;
 }
 
 export interface Player {

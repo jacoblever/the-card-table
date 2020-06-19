@@ -4,33 +4,49 @@ import { ModalComponent } from "./ModalComponent";
 
 type Props = {
   showDealModal: boolean,
+  defaultNumberToEachPlayer: number,
 
   tidy: () => void,
   shuffle: () => void,
-  deal: (numberToEachPlayer: number) => void
+  deal: (numberToEachPlayer: number) => void,
 
   openDealModal: () => void,
   closeDealModal: () => void,
 }
 
-export function ToolbarComponent(props: Props) {
-  let inputRef = React.createRef<HTMLInputElement>();
-  let handleDealClick = () => {
-    let numberToEachPlayer = +inputRef.current!.value;
-    props.deal(numberToEachPlayer);
-  };
-  return (
-    <div className="toolbar">
-      <button onClick={() => props.tidy()}>Tidy</button>
-      <button onClick={() => props.shuffle()}>Shuffle</button>
-      <button onClick={() => props.openDealModal()}>Deal</button>
+type State = {
+  numberToEachPlayer: number,
+}
 
-      {props.showDealModal && (<ModalComponent closable={true} onClose={() => props.closeDealModal()}>
-        <h2>Deal Cards</h2>
-        <p>Deal this many cards to each player:</p>
-        <input ref={inputRef} />
-        <button onClick={() => handleDealClick()}>Deal</button>
-      </ModalComponent>)}
-    </div>
-  );
+export class ToolbarComponent extends React.Component<Props, State>{
+  constructor(props: Readonly<Props>) {
+    super(props);
+    this.state = {
+      numberToEachPlayer: props.defaultNumberToEachPlayer
+    }
+  }
+
+  private handleDealClick() {
+    this.props.deal(this.state.numberToEachPlayer);
+  }
+
+  render() {
+    return (
+      <div className="toolbar">
+        <button onClick={() => this.props.tidy()}>Tidy</button>
+        <button onClick={() => this.props.shuffle()}>Shuffle</button>
+        <button onClick={() => this.props.openDealModal()}>Deal</button>
+
+        {this.props.showDealModal && (<ModalComponent closable={true} onClose={() => this.props.closeDealModal()}>
+          <h2>Deal Cards</h2>
+          <p>Deal this many cards to each player:</p>
+          <input
+            value={this.state.numberToEachPlayer}
+            onChange={(e) => this.setState({numberToEachPlayer: +e.target.value})}
+          />
+          <button onClick={() => this.handleDealClick()}>Deal</button>
+        </ModalComponent>)}
+      </div>
+    );
+  }
 }

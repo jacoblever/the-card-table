@@ -4,7 +4,7 @@ import { combineReducers } from "redux";
 import { CardsReducer } from "./cards_reducer";
 import { PlayersReducer } from "./players_reducer";
 import { WS_DISCONNECTED } from "../actions/websocket_actions";
-import { CLOSE_DEAL_MODAL, INITIAL_CARD_STATE, OPEN_DEAL_MODAL } from "../actions/card_actions";
+import { CLOSE_DEAL_MODAL, INITIAL_CARD_STATE, OPEN_DEAL_MODAL, SET_DEFAULT_DEAL_NUMBER } from "../actions/card_actions";
 import { RoomIdReducer } from "./room_id_reducer";
 
 export function MeReducer(
@@ -35,7 +35,7 @@ export function ConnectionReducer(
 }
 
 export function DealModalReducer(
-  state: DealModalState = {show: false},
+  state: DealModalState = {show: false, defaultDealNumber: 7},
   action: AppAction,
 ): DealModalState {
   switch (action.type) {
@@ -49,6 +49,11 @@ export function DealModalReducer(
         ...state,
         show: false,
       };
+    case SET_DEFAULT_DEAL_NUMBER:
+      return {
+        ...state,
+        defaultDealNumber: action.defaultDealNumber,
+      }
     default:
       return state;
   }
