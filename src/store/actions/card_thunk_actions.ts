@@ -30,7 +30,7 @@ function getCardsGroup(cardsById: { [key: string]: Card; }, cardId: string | nul
   return selectedCards;
 }
 
-function meanLocation(cards: Card[]) {
+export function meanLocation(cards: Card[]) {
   return Elementwise.map(i => {
     let sum = cards.map(x => x.location[i]).reduce((a, x) => a + x);
     return Math.round(sum / cards.length);

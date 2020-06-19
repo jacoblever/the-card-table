@@ -39,6 +39,16 @@ export class ModalComponent extends React.Component<Props, State> {
     }
   }
 
+  private handleKeyUp(event: React.KeyboardEvent<HTMLDivElement>) {
+    if(!this.props.closable) {
+      return;
+    }
+    let escapeKeyCode = 27;
+    if(event.keyCode === escapeKeyCode && this.props.onClose) {
+      this.props.onClose();
+    }
+  }
+
   private renderCloseButton(): JSX.Element | null {
     if (this.props.closable) {
       return <button className="modal-close" onClick={(e) => this.handleCloseClick(e)}>&times;</button>
@@ -48,7 +58,11 @@ export class ModalComponent extends React.Component<Props, State> {
 
   render() {
     return (
-      <div className="modal" onClick={(e) => this.handleBackgroundClick(e)}>
+      <div
+        className="modal"
+        onClick={(e) => this.handleBackgroundClick(e)}
+        onKeyUp={(e) => this.handleKeyUp(e)}
+      >
         <div className="modal-content">
           {this.renderCloseButton()}
           {this.props.children}
