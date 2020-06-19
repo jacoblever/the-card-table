@@ -4,7 +4,15 @@ import { AppState, Card, CardOwner, Coordinates, Player } from "../state";
 import { Elementwise } from "../../geometry/elementwise";
 import { LocationTransformer } from "../../geometry/locationTransformer";
 import { animateDropCard } from "../../server/animations";
-import { closeDealModal, deselectAllCards, dropCards, DropCardsAction, moveCards, pickUpCards } from "./card_actions";
+import {
+  closeDealModal,
+  deselectAllCards,
+  dropCards,
+  DropCardsAction,
+  moveCards,
+  pickUpCards,
+  setDefaultDealNumber
+} from "./card_actions";
 
 const tidyOffset = 0.2;
 
@@ -128,9 +136,12 @@ export function flipCard(params: FlipCardParams): AppThunkAction<void, FlipCardP
 export function shuffleSelectedCards(): AppThunkAction<void, null> {
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
     let cards = getCardsGroup(getState().room.cardsById);
+    await dispatch(deselectAllCards());
     let newLocation = meanLocation(cards);
     let zIndexes = cards.map(x => x.zIndex)
-      .sort((a, b) => Math.random() - 0.5);
+      .sort((a, b) => a - b);
+
+    cards.sort(() => Math.random() - 0.5);
 
     await dispatch(animateDropCard(dropCards(
       cards[0].heldBy,
@@ -152,6 +163,7 @@ export function tidySelectedCards(): AppThunkAction<void, null> {
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
     let cards = getCardsGroup(getState().room.cardsById)
       .sort((a, b) => a.zIndex - b.zIndex);
+    await dispatch(deselectAllCards());
     let newLocation = meanLocation(cards);
     await dispatch(animateDropCard(dropCards(
       cards[0].heldBy,
@@ -177,19 +189,22 @@ export function dealCards(params: DealCardsParams): AppThunkAction<void, DealCar
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
     let state = getState();
     await dispatch(closeDealModal());
-    let cards = getCardsGroup(state.room.cardsById);
-    cards.sort((a, b) => b.zIndex - a.zIndex);
+    let cards = getCardsGroup(state.room.cardsById)
+      .sort((a, b) => b.zIndex - a.zIndex);
     let players = getPlayersInOrderWithMeLast(state.room.players, state.room.me);
     await dispatch(deselectAllCards());
+    await dispatch(setDefaultDealNumber(params.numberToEachPlayer));
 
     let cardIndex = 0;
-
     for (let i = 0; i < params.numberToEachPlayer; i++) {
+      if (cardIndex >= cards.length) {
+        break;
+      }
       for (let j = 0; j < players.length; j++) {
-        let player = players[j];
         if (cardIndex >= cards.length) {
           break;
         }
+        let player = players[j];
         await dispatch(animateDropCard(dropCards(
           player.id,
           [{
