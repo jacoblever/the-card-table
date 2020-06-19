@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
-  DatabaseCard, DbConnection,
+  DbCard, DbConnection,
   DbPlayer,
   deleteConnection,
   getConnections,
@@ -22,27 +22,30 @@ let uuidv4 = () => {
 };
 
 let getInitialCards = (roomId: string) => {
-  let cards: DatabaseCard[] = [];
   let suits: (0 | 1 | 2 | 3)[] = [0, 1, 2, 3];
+  let tidyOffset = 0.2;
+  let cards = [];
   for (let suit of suits) {
     for (let i = 1; i <= 13; i++) {
-      cards.push({
-        cardId: uuidv4(),
-        roomId: roomId,
-        flipCount: 0,
-        suit: suit,
-        number: i,
-        heldBy: null,
-        location: [200, 150],
-        zIndex: 0,
-      });
+      cards.push({suit: suit, number: i });
     }
   }
   cards.sort(() => Math.random() - 0.5);
-  for (let i = 0; i < cards.length; i++) {
-    cards[i].zIndex = i;
-  }
-  return cards;
+  return cards.map<DbCard>((x, i) => {
+    return {
+      cardId: uuidv4(),
+      roomId: roomId,
+      flipCount: 0,
+      suit: x.suit,
+      number: x.number,
+      heldBy: null,
+      location: [
+        200 + tidyOffset * i - 52 * tidyOffset / 2,
+        150 - tidyOffset * i + 52 * tidyOffset / 2
+      ],
+      zIndex: i,
+    }
+  });
 }
 
 function getPlayerNewName(existingPlayers: DbPlayer[]) {

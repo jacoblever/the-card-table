@@ -1,4 +1,4 @@
-import { DatabaseCard, DbPlayer } from "./database";
+import { DbCard, DbPlayer } from "./database";
 
 export type BackendCard = {
   id: string;
@@ -10,7 +10,7 @@ export type BackendCard = {
   zIndex: number;
 }
 
-export const databaseToBackendCard = (card: DatabaseCard) => {
+export const databaseToBackendCard = (card: DbCard) => {
   let backendCard: BackendCard = {
     id: card.cardId,
     faceUp: card.flipCount % 2 === 1,

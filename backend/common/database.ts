@@ -21,7 +21,7 @@ export type DbConnection = {
   readyForActions: boolean;
 };
 
-export type DatabaseCard = {
+export type DbCard = {
   /** sort key */
   cardId: string;
   /** partition key */
@@ -161,7 +161,7 @@ export const getCards = async (roomId: string) => {
   if(!items){
     return [];
   }
-  return items.map<DatabaseCard>(card => {
+  return items.map<DbCard>(card => {
     return {
       cardId: card['cardId'],
       roomId: card['roomId'],
@@ -175,7 +175,7 @@ export const getCards = async (roomId: string) => {
   });
 };
 
-export const putCards = async (cards: DatabaseCard[]) => {
+export const putCards = async (cards: DbCard[]) => {
   let cardsTableName = getLambdaEnv().CardsTableName;
   let requestItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap = {};
   requestItems[cardsTableName] = cards.map(card => {
