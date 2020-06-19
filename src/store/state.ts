@@ -1,17 +1,24 @@
 import { Suit } from '../Suit';
 
 export interface AppState {
-  cards: CardState;
+  room: RoomState;
   roomId: string | null;
 }
 
-export interface CardState {
-  webSocketDisconnected: boolean;
+export interface RoomState {
+  connection: ConnectionState;
   me: string;
   cardsById: { [key: string]: Card; };
   players: Player[];
-  selectionActive: boolean;
-  showDealModal: boolean;
+  dealModal: DealModalState;
+}
+
+export interface ConnectionState {
+  webSocketDisconnected: boolean;
+}
+
+export interface DealModalState {
+  show: boolean;
 }
 
 export interface Player {

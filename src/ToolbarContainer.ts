@@ -2,16 +2,17 @@ import { connect } from 'react-redux'
 
 import { AppState } from "./store/state";
 import {
-  AppThunkDispatch,
-  closeDealModal, dealCards,
-  openDealModal,
-  shuffleSelectedCards,
-  tidySelectedCards
-} from './store/actions';
+  AppThunkDispatch
+} from './store/actions/actions';
 import { ToolbarComponent } from "./ToolbarComponent";
+import {
+  closeDealModal,
+  openDealModal
+} from "./store/actions/card_actions";
+import { dealCards, shuffleSelectedCards, tidySelectedCards } from "./store/actions/card_thunk_actions";
 
 const mapStateToProps = (state: AppState, ownProps: {}) => ({
-  showDealModal: state.cards.showDealModal,
+  showDealModal: state.room.dealModal.show,
 });
 
 const mapDispatchToProps = (dispatch: AppThunkDispatch, ownProps: {}) => ({

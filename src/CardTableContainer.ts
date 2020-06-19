@@ -3,19 +3,21 @@ import { Dispatch } from 'redux';
 
 import { AppState, CardOwnerTable } from "./store/state";
 import CardTableComponent from './CardTableComponent'
-import { ActionTypes, deselectAllCards, wsConnect, wsDisconnect } from './store/actions';
+import { AppAction } from './store/actions/actions';
+import { wsConnect, wsDisconnect } from "./store/actions/websocket_actions";
+import { deselectAllCards } from "./store/actions/card_actions";
 
 const mapStateToProps = (state: AppState, ownProps: {}) => ({
-  cards: Object.keys(state.cards.cardsById)
-    .map(cardId => state.cards.cardsById[cardId])
+  cards: Object.keys(state.room.cardsById)
+    .map(cardId => state.room.cardsById[cardId])
     .filter(card => card.heldBy === CardOwnerTable),
-  players: state.cards.players,
-  me: state.cards.me,
-  showToolbar: state.cards.selectionActive,
-  webSocketDisconnected: state.cards.webSocketDisconnected,
+  players: state.room.players,
+  me: state.room.me,
+  showToolbar: Object.values(state.room.cardsById).filter(x => x.selected).length > 0,
+  webSocketDisconnected: state.room.connection.webSocketDisconnected,
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<ActionTypes>, ownProps: {}) => ({
+const mapDispatchToProps = (dispatch: Dispatch<AppAction>, ownProps: {}) => ({
   onMount: () => dispatch(wsConnect()),
   onUnmount: () => dispatch(wsDisconnect()),
   onDeselectAllCards: () => dispatch(deselectAllCards()),

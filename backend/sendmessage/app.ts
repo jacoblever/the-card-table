@@ -21,11 +21,11 @@ import {
   storeCardDrop,
 } from "../common/database";
 import {
-  BACKEND_DROP_CARD,
+  BACKEND_DROP_CARDS,
   BACKEND_GET_INITIAL_STATE,
   BACKEND_INITIAL_CARD_STATE, BACKEND_KICK_PLAYER,
   BACKEND_NAME_CHANGE,
-  BackendActionTypes, backendDropCardOnTable,
+  BackendActionTypes, backendDropCardsOnTable,
   BackendInitialCardStateAction, BackendKickPlayerAction, backendPlayersUpdate
 } from "../common/backend_actions";
 
@@ -47,7 +47,7 @@ async function movePlayersCardsToTable(
 ) {
   let playersCards = (await getCards(roomId))
     .filter(x => x.heldBy === action.playerId);
-  let dropAction = backendDropCardOnTable(playersCards.map(x => {
+  let dropAction = backendDropCardsOnTable(playersCards.map(x => {
     return {
       cardId: x.cardId,
       turnOver: x.flipCount % 2 === 1,
@@ -107,7 +107,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let actionToSend: BackendActionTypes = action;
   let sendToSelf = false;
   switch (action.type) {
-    case BACKEND_DROP_CARD:
+    case BACKEND_DROP_CARDS:
       await Promise.all(action.drops.map(async drop => {
         await storeCardDrop({
           roomId: roomId,

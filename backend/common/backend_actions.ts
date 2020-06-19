@@ -1,15 +1,15 @@
 import { BackendCardState, BackendPlayer, databaseToBackendPlayer } from "./backend_state";
 import { DbConnection, DbPlayer } from "./database";
 
-export const BACKEND_DROP_CARD = "DROP_CARD";
+export const BACKEND_DROP_CARDS = "DROP_CARDS";
 export const BACKEND_GET_INITIAL_STATE = "GET_INITIAL_STATE";
 export const BACKEND_INITIAL_CARD_STATE = "INITIAL_CARD_STATE";
 export const BACKEND_PLAYERS_UPDATE = "PLAYERS_UPDATE";
 export const BACKEND_NAME_CHANGE = "NAME_CHANGE";
 export const BACKEND_KICK_PLAYER = "KICK_PLAYER";
 
-export interface BackendDropCardAction {
-  type: typeof BACKEND_DROP_CARD;
+export interface BackendDropCardsAction {
+  type: typeof BACKEND_DROP_CARDS;
   remote: true,
   nowHeldBy: string | null,
   drops: {
@@ -45,9 +45,9 @@ export interface BackendKickPlayerAction {
   playerId: string;
 }
 
-export function backendDropCardOnTable(cards: {cardId: string, turnOver?: boolean}[]): BackendDropCardAction {
+export function backendDropCardsOnTable(cards: {cardId: string, turnOver?: boolean}[]): BackendDropCardsAction {
   return {
-    type: BACKEND_DROP_CARD,
+    type: BACKEND_DROP_CARDS,
     remote: true,
     nowHeldBy: null,
     drops: cards.map(x => {
@@ -71,7 +71,7 @@ export function backendPlayersUpdate(players: DbPlayer[], connections: DbConnect
   };
 }
 
-export type BackendActionTypes = BackendDropCardAction
+export type BackendActionTypes = BackendDropCardsAction
   | BackendGetInitialStateAction
   | BackendInitialCardStateAction
   | BackendPlayersUpdateAction

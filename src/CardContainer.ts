@@ -1,12 +1,13 @@
 import { connect } from 'react-redux'
 
 import {
-  selectCardsUnder,
-  dragCard, AppThunkDispatch, releaseCard, grabCard, flipCard,
-} from './store/actions'
+  AppThunkDispatch,
+} from './store/actions/actions'
 
 import { AppState, CardOwner, Coordinates } from "./store/state";
 import { CardComponent } from './CardComponent'
+import { selectCardsUnder } from "./store/actions/card_actions";
+import { dragCard, flipCard, grabCard, releaseCard } from "./store/actions/card_thunk_actions";
 
 type Props = {
   id: string,
@@ -15,7 +16,7 @@ type Props = {
 }
 
 const mapStateToProps = (state: AppState, ownProps: Props) => {
-  let card = state.cards.cardsById[ownProps.id];
+  let card = state.room.cardsById[ownProps.id];
   return {
     heldBy: card.heldBy,
     faceUp: ownProps.forceFaceDown || card.forceFaceDown ? false : card.faceUp,

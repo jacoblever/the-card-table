@@ -1,8 +1,9 @@
 import { AppState, Card, CardOwner, CardOwnerTable, Coordinates } from "../store/state";
-import { ActionTypes, AppThunkAction, DropCardAction, moveCard, pickUpCard } from "../store/actions";
+import { AppAction, AppThunkAction} from "../store/actions/actions";
 import { LocationTransformer } from "../geometry/locationTransformer";
 import { Elementwise } from "../geometry/elementwise";
 import { Dispatch } from "redux";
+import { DropCardsAction, moveCards, pickUpCards } from "../store/actions/card_actions";
 
 let getEndLocationInFinalOwnersFrame = (card: Card, endLocation: Coordinates, nowHeldBy: CardOwner, me: string) => {
   if (nowHeldBy === CardOwnerTable) {
@@ -32,11 +33,11 @@ let requestAnimationFrameWithOutOfFocusFallback = (func: () => void, cancelTimeo
   }, cancelTimeout);
 };
 
-export function animateDropCard(dropCardAction: DropCardAction): AppThunkAction<void, DropCardAction> {
-  return async (dispatch: Dispatch<ActionTypes>, getState: () => AppState) => {
+export function animateDropCard(dropCardAction: DropCardsAction): AppThunkAction<void, DropCardsAction> {
+  return async (dispatch: Dispatch<AppAction>, getState: () => AppState) => {
     let state = getState();
-    let cardsById = state.cards.cardsById;
-    let me = state.cards.me;
+    let cardsById = state.room.cardsById;
+    let me = state.room.me;
 
     let duration = 300;
     let framesPerSecond = 60;
@@ -75,13 +76,13 @@ export function animateDropCard(dropCardAction: DropCardAction): AppThunkAction<
 
     let animationStep = () => {
       if (stepNumber === 1) {
-        dispatch(pickUpCard(animationDetails.map(d => {
+        dispatch(pickUpCards(animationDetails.map(d => {
           return {cardId: d.card.id, ensureIdentityStaysHidden: d.cardIdentitySecret && beingMovedToPrivateArea};
         })));
       }
 
       if (stepPercent * stepNumber <= 1) {
-        dispatch(moveCard(animationDetails.map(d => {
+        dispatch(moveCards(animationDetails.map(d => {
           let nextLocation = Elementwise.map(i => {
             let start = d.startInOriginalOwnersFrame;
             let end = d.endInOriginalOwnersFrame;

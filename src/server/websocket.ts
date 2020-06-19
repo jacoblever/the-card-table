@@ -3,15 +3,11 @@ import Cookies from "js-cookie"
 import { AppState, CardOwnerTable } from "../store/state";
 import { animateDropCard } from "./animations";
 import {
-  ActionTypes, AppThunkDispatch,
-  DROP_CARD, dropCard,
-  INITIAL_CARD_STATE,
-  KICK_PLAYER,
-  NAME_CHANGE,
-  PLAYERS_UPDATE,
-  WS_CONNECT,
-  WS_DISCONNECT, wsDisconnected
-} from "../store/actions";
+  AppAction, AppThunkDispatch
+} from "../store/actions/actions";
+import { WS_CONNECT, WS_DISCONNECT, wsDisconnected } from "../store/actions/websocket_actions";
+import { DROP_CARDS, dropCards, INITIAL_CARD_STATE } from "../store/actions/card_actions";
+import { KICK_PLAYER, NAME_CHANGE, PLAYERS_UPDATE } from "../store/actions/player_actions";
 
 function getWebSocketPath(roomId: string) {
   let playerId = Cookies.get(`playerId-${roomId}`) ?? "NewPlayer";
@@ -24,7 +20,7 @@ function getWebSocketPath(roomId: string) {
 const socketMiddleware = () => {
   let socket: WebSocket | null = null;
 
-  const onOpen = (store: Store<AppState, ActionTypes>, roomId: string) => (event: Event) => {
+  const onOpen = (store: Store<AppState, AppAction>, roomId: string) => (event: Event) => {
     console.log('websocket open');
     let action = {
       type: "GET_INITIAL_STATE",
@@ -36,15 +32,15 @@ const socketMiddleware = () => {
     }));
   };
 
-  const onClose = (store: Store<AppState, ActionTypes>) => (event: CloseEvent) => {
+  const onClose = (store: Store<AppState, AppAction>) => (event: CloseEvent) => {
     console.log('websocket closed');
     store.dispatch(wsDisconnected());
   };
 
-  const onMessage = (store: Store<AppState, ActionTypes>) => (event: MessageEvent) => {
-    let message = JSON.parse(event.data) as ActionTypes;
+  const onMessage = (store: Store<AppState, AppAction>) => (event: MessageEvent) => {
+    let message = JSON.parse(event.data) as AppAction;
     switch (message.type) {
-      case DROP_CARD:
+      case DROP_CARDS:
         let thunkDispatch = store.dispatch as AppThunkDispatch;
         thunkDispatch(animateDropCard(message));
         break;
@@ -61,7 +57,7 @@ const socketMiddleware = () => {
     }
   };
 
-  return (store: Store<AppState, ActionTypes>) => (next: Dispatch<ActionTypes>) => (action: ActionTypes) => {
+  return (store: Store<AppState, AppAction>) => (next: Dispatch<AppAction>) => (action: AppAction) => {
     let roomIdGetter = () => store.getState().roomId!;
     switch (action.type) {
       case WS_CONNECT:
@@ -82,7 +78,7 @@ const socketMiddleware = () => {
         socket = null;
         console.log('websocket closed');
         break;
-      case DROP_CARD:
+      case DROP_CARDS:
       case NAME_CHANGE:
       case KICK_PLAYER:
         if (socket === null || socket.readyState !== WebSocket.OPEN || action.remote) {
@@ -103,16 +99,16 @@ const socketMiddleware = () => {
     }
     next(action);
 
-    if(action.type === DROP_CARD && !action.remote) {
+    if(action.type === DROP_CARDS && !action.remote) {
       let state = store.getState();
-      let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.cards.me;
+      let droppedToOtherPlayer = action.nowHeldBy !== CardOwnerTable && action.nowHeldBy !== state.room.me;
       if(droppedToOtherPlayer) {
         let thunkDispatch = store.dispatch as AppThunkDispatch;
         thunkDispatch(animateDropCard(
-          dropCard(
+          dropCards(
             action.nowHeldBy,
             action.drops.map(drop => {
-              let card = state.cards.cardsById[drop.cardId];
+              let card = state.room.cardsById[drop.cardId];
               return {
                 cardId: card.id,
                 location: [0, 0],

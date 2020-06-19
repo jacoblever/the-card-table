@@ -1,15 +1,15 @@
-import { Card, CardState } from "./state";
-import { SelectCardsUnderAction } from "./actions";
-import { Elementwise } from "../geometry/elementwise"
+import { Card } from "../state";
+import { Elementwise } from "../../geometry/elementwise"
+import { SelectCardsUnderAction } from "../actions/card_actions";
 
 export function SelectCardsUnderReducer(
-  state: CardState,
+  state: { [key: string]: Card; },
   action: SelectCardsUnderAction,
-): CardState {
+): { [key: string]: Card; } {
   const cardWidth = 60;
   const cardHeight = 86;
-  let cardClicked = state.cardsById[action.cardId];
-  let allCards = Object.values(state.cardsById);
+  let cardClicked = state[action.cardId];
+  let allCards = Object.values(state);
   let cardsWithSameOwner = allCards
     .filter(x => x.heldBy === cardClicked.heldBy);
 
@@ -50,11 +50,8 @@ export function SelectCardsUnderReducer(
   let selectAll = cardClicked.selected;
 
   let clickedIndex = cardsToSelect.map(x => x.id).indexOf(cardClicked.id);
-  let newState: CardState = {
-    ...state,
-    selectionActive: cardsToSelect.length > 0,
-  };
-  newState.cardsById[cardClicked.id] = {...cardClicked, selected: true};
+  let newState = {...state};
+  newState[cardClicked.id] = {...cardClicked, selected: true};
 
   for(let i = clickedIndex + 1; i < cardsToSelect.length; i++) {
     let card = cardsToSelect[i];
@@ -62,7 +59,7 @@ export function SelectCardsUnderReducer(
       break;
     }
 
-    newState.cardsById[card.id] = {...card, selected: true};
+    newState[card.id] = {...card, selected: true};
   }
 
   for(let i = clickedIndex - 1; i >= 0; i--) {
@@ -71,23 +68,19 @@ export function SelectCardsUnderReducer(
       break;
     }
 
-    newState.cardsById[card.id] = {...card, selected: true};
+    newState[card.id] = {...card, selected: true};
   }
   return newState;
 }
 
 export function DeselectAllCardsReducer(
-  state: CardState,
-): CardState {
-
-  let newState: CardState = {
-    ...state,
-    selectionActive: false,
-  };
-  Object.values(state.cardsById)
+  state: { [key: string]: Card; },
+): { [key: string]: Card; } {
+  let newState = {...state};
+  Object.values(state)
     .forEach(card => {
       if(card.selected) {
-        newState.cardsById[card.id] = {...card, selected: false};
+        newState[card.id] = {...card, selected: false};
       }
     });
   return newState;
