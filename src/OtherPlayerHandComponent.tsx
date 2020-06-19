@@ -18,7 +18,7 @@ type Props = {
 export class OtherPlayerHandComponent extends React.Component<Props, {}> {
   private domElement: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
 
-  constructor(props: any) {
+  constructor(props: Readonly<Props>) {
     super(props);
     this.state = {}
   }

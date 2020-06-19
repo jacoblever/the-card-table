@@ -8,7 +8,7 @@ import { Suit } from './Suit';
 import './CardComponent.css';
 import { CardOwner, CardOwnerTable, Coordinates } from "./store/state";
 
-export type CardProps = {
+export type Props = {
   id: string,
   location: Coordinates,
   suit: Suit,
@@ -26,13 +26,10 @@ export type CardProps = {
   onDrop: (nowHeldBy: CardOwner) => void,
 }
 
-type CardState = {
-}
-
-export class CardComponent extends React.Component<CardProps, CardState> {
+export class CardComponent extends React.Component<Props, {}> {
   private domElement: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
   
-  constructor(props: any) {
+  constructor(props: Readonly<Props>) {
     super(props);
     this.state = {}
   }

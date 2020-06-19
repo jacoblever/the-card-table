@@ -8,7 +8,7 @@ import OtherPlayerHandContainer from "./OtherPlayerHandContainer";
 import { ToolbarContainer } from "./ToolbarContainer";
 import { ModalComponent } from "./ModalComponent";
 
-type CardTableProps = {
+type Props = {
   cards: Card[],
   players: Player[],
   me: string,
@@ -21,8 +21,8 @@ type CardTableProps = {
   onDeselectAllCards: () => void,
 }
 
-class CardTableComponent extends React.Component<CardTableProps, {}> {
-  constructor(props: any) {
+class CardTableComponent extends React.Component<Props, {}> {
+  constructor(props: Readonly<Props>) {
     super(props);
     this.state = {}
   }

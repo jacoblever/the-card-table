@@ -24,7 +24,7 @@ type State = {
 export class HandComponent extends React.Component<Props, State> {
   private domElement: React.RefObject<HTMLDivElement> = React.createRef<HTMLDivElement>();
 
-  constructor(props: any) {
+  constructor(props: Readonly<Props>) {
     super(props);
     this.state = {
       editMode: false,

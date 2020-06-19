@@ -4,16 +4,16 @@ import { CardComponent } from "./CardComponent";
 import { Coordinates } from "./store/state";
 import { Suit } from "./Suit";
 
-type LobbyProps = {
+type Props = {
   onJoinRoom: (roomId: string) => {},
 }
 
-type LobbyState = {
+type State = {
   roomId: string,
 }
 
-export class LobbyComponent extends React.Component<LobbyProps, LobbyState> {
-  constructor(props: any) {
+export class LobbyComponent extends React.Component<Props, State> {
+  constructor(props: Readonly<Props>) {
     super(props);
     this.state = {
       roomId: "",
