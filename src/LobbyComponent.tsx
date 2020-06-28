@@ -3,6 +3,7 @@ import './LobbyComponent.css';
 import { CardComponent } from "./CardComponent";
 import { Coordinates } from "./store/state";
 import { Suit } from "./Suit";
+import { words } from "./words/words";
 
 type Props = {
   onJoinRoom: (roomId: string) => {},
@@ -10,22 +11,81 @@ type Props = {
 
 type State = {
   roomId: string,
+  placeholder: string,
+  fullPlaceholder: string,
+  showTypeMoreMessage: boolean,
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export class LobbyComponent extends React.Component<Props, State> {
+  private readonly _minimumRoomCodeLength = 14;
+
+  private _showTypeMoreMessageTimeout: NodeJS.Timeout | null = null;
+
   constructor(props: Readonly<Props>) {
     super(props);
     this.state = {
       roomId: "",
+      placeholder: "",
+      fullPlaceholder: "",
+      showTypeMoreMessage: false,
+    }
+  }
+
+  private onInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    let roomId = event.target.value;
+    this.setState({
+      roomId: roomId,
+    });
+
+    if(this._showTypeMoreMessageTimeout) {
+      window.clearTimeout(this._showTypeMoreMessageTimeout);
+      this._showTypeMoreMessageTimeout = null;
+    }
+
+    if(roomId.length === 0 || roomId.length >= this._minimumRoomCodeLength) {
+      this.setState({
+        showTypeMoreMessage: false,
+      });
+    } else {
+      this._showTypeMoreMessageTimeout = setTimeout(() => {
+        this.setState({
+          showTypeMoreMessage: true,
+        });
+      }, 1500);
     }
   }
 
   private buttonClick(e: React.MouseEvent<HTMLButtonElement>) {
-    window.history.pushState({}, "", `${window.location.origin}/${this.state.roomId}`);
-    this.props.onJoinRoom(this.state.roomId);
+    let roomId = this.state.roomId;
+    if(roomId === "") {
+      roomId = this.state.fullPlaceholder;
+    }
+    window.history.pushState({}, "", `${window.location.origin}/${roomId}`);
+    this.props.onJoinRoom(roomId);
   }
 
-  private renderSampleCards(): JSX.Element[] {
+  componentDidMount() {
+    this.showSampleRoomNames();
+  }
+
+  private async showSampleRoomNames() {
+    while (true) {
+      let sampleName = words.sort(() => Math.random() - 0.5).slice(0, 4).join('-');
+      this.setState({placeholder: "", fullPlaceholder: sampleName });
+      await sleep(300);
+      for (let i = 1; i <= sampleName.length; i++) {
+        this.setState({placeholder: sampleName.slice(0, i)});
+        await sleep(60);
+      }
+      await sleep(3000);
+    }
+  }
+
+  private static renderSampleCards(): JSX.Element[] {
     let cardProps = [
       {
         id: "sample-1",
@@ -86,19 +146,23 @@ export class LobbyComponent extends React.Component<Props, State> {
           <input
             type="text"
             value={this.state.roomId}
-            onChange={event => this.setState({roomId: event.target.value})}
+            placeholder={this.state.placeholder}
+            onChange={(event) => this.onInputChange(event)}
           />
           <button
             type="submit"
-            disabled={this.state.roomId === ""}
+            disabled={this.state.roomId.length > 0 && this.state.roomId.length < this._minimumRoomCodeLength}
             onClick={(e) => this.buttonClick(e)}
           >
             Enter Room
           </button>
+          {this.state.showTypeMoreMessage && (<p>
+            Choose a longer room code
+          </p>)}
         </form>
       </div>
       <div className="lobby-sample-cards">
-        {this.renderSampleCards()}
+        {LobbyComponent.renderSampleCards()}
       </div>
     </div>;
   }

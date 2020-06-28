@@ -56,7 +56,7 @@ function getPlayerNewName(existingPlayers: DbPlayer[]) {
 }
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  let roomId = event.queryStringParameters['room-id'];
+  let roomId = event.queryStringParameters['room-id'].toLowerCase();
   let playerId = event.queryStringParameters['player-id'];
   let playerName = event.queryStringParameters['player-name'];
   let connectionId = event.requestContext.connectionId;
