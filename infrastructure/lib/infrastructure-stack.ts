@@ -187,11 +187,6 @@ export class InfrastructureStack extends cdk.Stack {
       });
     bucket.grantPublicAccess();
 
-    new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(`../build-${this.frontendEnvironment}`)],
-      destinationBucket: bucket,
-    });
-
     let customDomainCertificate = Certificate.fromCertificateArn(
       this,
       'FrontendCustomDomainCertificate',
@@ -221,6 +216,12 @@ export class InfrastructureStack extends cdk.Stack {
         }],
       },
     );
+
+    new BucketDeployment(this, 'DeployWebsite', {
+      sources: [Source.asset(`../build-${this.frontendEnvironment}`)],
+      destinationBucket: bucket,
+      distribution: cloudFrontDistribution, // Invalidate CloudFront's cache
+    });
 
     new CfnOutput(
       this,
