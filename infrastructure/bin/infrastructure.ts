@@ -5,8 +5,8 @@ import { InfrastructureStack } from '../lib/infrastructure-stack';
 
 const app = new cdk.App();
 
-const jacobleverComCertArn =
-  "arn:aws:acm:eu-west-1:350413574090:certificate/8da48eb3-bba5-4337-a45f-335871db9572";
+const jacobleverComCloudFrontCertArn =
+  "arn:aws:acm:us-east-1:350413574090:certificate/0323ffad-0ce6-47b5-8d5e-f6e56f16e425";
 const stackEnv = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: process.env.CDK_DEFAULT_REGION,
@@ -18,7 +18,7 @@ new InfrastructureStack(
   { env: stackEnv },
   {
     frontendCustomDomain: "cards.jacoblever.com",
-    customDomainCertificateArn: jacobleverComCertArn,
+    customDomainCertificateArn: jacobleverComCloudFrontCertArn,
     frontendEnvironment: "production",
   },
 );
@@ -29,7 +29,7 @@ new InfrastructureStack(
   { env: stackEnv },
   {
     frontendCustomDomain: "cards-staging.jacoblever.com",
-    customDomainCertificateArn: jacobleverComCertArn,
+    customDomainCertificateArn: jacobleverComCloudFrontCertArn,
     frontendEnvironment: "staging",
   },
 );

@@ -1,14 +1,6 @@
 import * as cdk from '@aws-cdk/core';
 import { CfnOutput, RemovalPolicy } from '@aws-cdk/core';
-import {
-  CfnApi,
-  CfnApiMapping,
-  CfnDeployment,
-  CfnDomainName,
-  CfnIntegration,
-  CfnRoute,
-  CfnStage
-} from '@aws-cdk/aws-apigatewayv2'
+import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-cdk/aws-apigatewayv2'
 import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
 import { Bucket, BucketAccessControl, HttpMethods } from '@aws-cdk/aws-s3'
 import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment'
@@ -17,6 +9,7 @@ import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/
 import { exec } from 'child_process'
 import { promisify } from 'util';
 import { Certificate } from '@aws-cdk/aws-certificatemanager'
+import { CloudFrontWebDistribution, ViewerCertificate } from "@aws-cdk/aws-cloudfront";
 
 const execAsync = promisify(exec);
 
@@ -199,105 +192,34 @@ export class InfrastructureStack extends cdk.Stack {
       destinationBucket: bucket,
     });
 
-    let api = new CfnApi(
+    let customDomainCertificate = Certificate.fromCertificateArn(
       this,
-      'FrontendApi',
-      {
-        name: 'TheCardRoomFrontendApi',
-        protocolType: "HTTP",
-      },
+      'FrontendCustomDomainCertificate',
+      this.customDomainCertificateArn,
     );
 
-    let frontendBucketUrl = `https://${bucket.bucketName}.s3-${this.awsRegion}.amazonaws.com`;
-    let integration = new CfnIntegration(
+    const cloudFrontDistribution = new CloudFrontWebDistribution(
       this,
-      'ProxyIntegration',
+      'FrontendCloudFrontDistribution',
       {
-        apiId: api.ref,
-        integrationType: "HTTP_PROXY",
-        integrationUri: `${frontendBucketUrl}/index.html`,
-        payloadFormatVersion: "1.0",
-        integrationMethod: "GET"
-      },
-    );
-
-    let indexRoute = new CfnRoute(
-      this,
-      'IndexRoute',
-      {
-        apiId: api.ref,
-        routeKey: "GET /",
-        target: `integrations/${integration.ref}`,
-      }
-    );
-    let proxyRoute = new CfnRoute(
-      this,
-      'ProxyRoute',
-      {
-        apiId: api.ref,
-        routeKey: "GET /{proxy+}",
-        target: `integrations/${integration.ref}`,
-      }
-    );
-
-    let deployment = new CfnDeployment(
-      this,
-      "FrontendDeployment",
-      {
-        apiId: api.ref,
-      },
-    );
-    deployment.addDependsOn(indexRoute);
-    deployment.addDependsOn(proxyRoute);
-
-    let stage = new CfnStage(
-      this,
-      "FrontenStage",
-      {
-        apiId: api.ref,
-        deploymentId: deployment.ref,
-        stageName: "Prod",
-        description: "Prod Stage",
-      },
-    );
-
-    let cert = Certificate.fromCertificateArn(
-      this,
-      'certificate',
-      this.customDomainCertificateArn)
-
-    let domain = new CfnDomainName(
-      this,
-      "DomainName",
-      {
-        domainName: this.frontendCustomDomain,
-        domainNameConfigurations: [
+        originConfigs: [{
+          s3OriginSource: {
+            s3BucketSource: bucket,
+          },
+          behaviors: [{isDefaultBehavior: true}],
+        }],
+        viewerCertificate: ViewerCertificate.fromAcmCertificate(
+          customDomainCertificate,
           {
-            certificateArn: cert.certificateArn,
-          }
-        ],
-      }
-    );
-
-    let apiDomainNameMapping = new CfnApiMapping(
-      this,
-      "ApiDomainNameMapping",
-      {
-        domainName: domain.ref,
-        apiId: api.ref,
-        stage: stage.ref,
-      }
-    );
-
-    apiDomainNameMapping.addDependsOn(stage);
-
-    new CfnOutput(
-      this,
-      "FrontendBucketPublicURL",
-      {
-        description: "The URL S3 bucket that hosts the frontend app",
-        value: frontendBucketUrl,
-      }
+            aliases: [this.frontendCustomDomain],
+          },
+        ),
+        errorConfigurations: [{
+          errorCode: 404,
+          responseCode: 200,
+          responsePagePath: '/index.html',
+        }],
+      },
     );
 
     new CfnOutput(
@@ -305,8 +227,17 @@ export class InfrastructureStack extends cdk.Stack {
       "FrontendCloudFrontDomain",
       {
         description: "The CloudFront URL for the frontend app (set a CNAME to point to this)",
-        value: domain.attrRegionalDomainName,
-      }
+        value: cloudFrontDistribution.domainName,
+      },
+    );
+
+    new CfnOutput(
+      this,
+      "FrontendBucketPublicURL",
+      {
+        description: "The URL S3 bucket that hosts the frontend app",
+        value: `https://${bucket.bucketName}.s3-${this.awsRegion}.amazonaws.com`,
+      },
     );
   }
 
