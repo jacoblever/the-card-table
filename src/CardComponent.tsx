@@ -116,6 +116,7 @@ export class CardComponent extends React.Component<Props, {}> {
       <div
         className={this.getClassNames()}
         ref={this.domElement}
+        data-long-press-delay="700"
         style={this.style()}
         onDoubleClick={(e) => this.onDoubleClick()}
       >
