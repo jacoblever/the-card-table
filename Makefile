@@ -12,6 +12,8 @@ build:
 	cd ./backend/ondisconnect/ && cp ../build.sh ./ && ./build.sh && rm -f build.sh
 	# Build sendmessage lambda function...
 	cd ./backend/sendmessage/ && cp ../build.sh ./ && ./build.sh && rm -f build.sh
+	# Build onplayerttl lambda function...
+	cd ./backend/onplayerttl/ && cp ../build.sh ./ && ./build.sh && rm -f build.sh
 
 .PHONY: deploy-prod
 deploy-prod: build

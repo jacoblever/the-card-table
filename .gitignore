@@ -17,6 +17,7 @@ backend/**/*.js.map
 backend/*/build/**
 
 # build files
+/build
 /build-staging
 /build-production
 /out/**

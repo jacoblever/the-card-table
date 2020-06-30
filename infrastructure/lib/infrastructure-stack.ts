@@ -1,15 +1,16 @@
 import * as cdk from '@aws-cdk/core';
 import { CfnOutput, RemovalPolicy } from '@aws-cdk/core';
 import { CfnApi, CfnDeployment, CfnIntegration, CfnRoute, CfnStage } from '@aws-cdk/aws-apigatewayv2'
-import { CfnPermission, Code, Function as LambdaFunction, Runtime } from '@aws-cdk/aws-lambda'
+import { CfnPermission, Code, Function as LambdaFunction, Runtime, StartingPosition } from '@aws-cdk/aws-lambda'
 import { Bucket, BucketAccessControl, HttpMethods } from '@aws-cdk/aws-s3'
 import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment'
 import { Effect, PolicyStatement } from '@aws-cdk/aws-iam'
-import { AttributeType, ProjectionType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
+import { AttributeType, ProjectionType, StreamViewType, Table, TableEncryption } from '@aws-cdk/aws-dynamodb'
 import { exec } from 'child_process'
 import { promisify } from 'util';
 import { Certificate } from '@aws-cdk/aws-certificatemanager'
 import { CloudFrontWebDistribution, ViewerCertificate } from "@aws-cdk/aws-cloudfront";
+import { DynamoEventSource } from "@aws-cdk/aws-lambda-event-sources";
 
 const execAsync = promisify(exec);
 
@@ -58,9 +59,11 @@ export class InfrastructureStack extends cdk.Stack {
           name: 'playerId',
           type: AttributeType.STRING,
         },
+        timeToLiveAttribute: 'timeToLive',
         readCapacity: 5,
         writeCapacity: 5,
         encryption: TableEncryption.AWS_MANAGED,
+        stream: StreamViewType.KEYS_ONLY,
         removalPolicy: cdk.RemovalPolicy.DESTROY,
       },
     );
@@ -117,7 +120,9 @@ export class InfrastructureStack extends cdk.Stack {
     let disconnectFunction = this.createFunction("DisconnectFunction", "../backend/ondisconnect/", api);
     let sendFunction = this.createFunction("SendFunction", "../backend/sendmessage/", api);
 
-    [connectFunction, disconnectFunction, sendFunction].forEach(f => {
+    let onPlayerTtlFunction = this.createOnPlayerTtlFunction("../backend/onplayerttl/", playersTable);
+
+    [connectFunction, disconnectFunction, sendFunction, onPlayerTtlFunction].forEach(f => {
       playersTable.grantReadWriteData(f);
       connectionsTable.grantReadWriteData(f);
       cardsTable.grantReadWriteData(f);
@@ -269,7 +274,7 @@ export class InfrastructureStack extends cdk.Stack {
     );
   }
 
-  private createFunction(id: string, codeUri: string, api: CfnApi) {
+  private createFunction(id: string, codeUri: string, api: CfnApi): LambdaFunction {
     let func = new LambdaFunction(
       this,
       id,
@@ -290,6 +295,26 @@ export class InfrastructureStack extends cdk.Stack {
       },
     );
     permission.addDependsOn(api);
+    return func;
+  }
+
+  private createOnPlayerTtlFunction(codeUri: string, playersTable: Table): LambdaFunction {
+    let func = new LambdaFunction(
+      this,
+      "OnPlayerTtlFunction",
+      {
+        code: Code.fromAsset(codeUri),
+        handler: "app.handler",
+        memorySize: 256,
+        runtime: Runtime.NODEJS_12_X,
+      },
+    );
+    func.addEventSource(new DynamoEventSource(playersTable, {
+      startingPosition: StartingPosition.TRIM_HORIZON,
+      batchSize: 5,
+      bisectBatchOnError: true,
+      retryAttempts: 1,
+    }));
     return func;
   }
 }
