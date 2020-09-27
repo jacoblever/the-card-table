@@ -51,6 +51,7 @@ export function CardsReducer(
             ...x.card,
             zIndex: currentMaxZIndex + 1 + i,
             forceFaceDown: x.pickUp.ensureIdentityStaysHidden,
+            isMoving: true,
           }
         });
       return {
@@ -80,6 +81,7 @@ export function CardsReducer(
           heldBy: action.nowHeldBy,
           forceFaceDown: false,
           faceUp: drop.turnOver ? !card.faceUp : card.faceUp,
+          isMoving: false,
         }
       });
       return {

@@ -40,6 +40,7 @@ export interface Card {
   /** Not persisted on the backend */
   forceFaceDown: boolean;
   selected: boolean;
+  isMoving: boolean;
 }
 
 export type CardOwner = string | typeof CardOwnerTable

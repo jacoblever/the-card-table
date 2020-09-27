@@ -13,7 +13,10 @@ const mapStateToProps = (state: AppState, ownProps: {}) => ({
     .filter(card => card.heldBy === CardOwnerTable),
   players: state.room.players,
   me: state.room.me,
-  showToolbar: Object.values(state.room.cardsById).filter(x => x.selected).length > 0,
+  showToolbar: (() => {
+    let selectedCards = Object.values(state.room.cardsById).filter(x => x.selected);
+    return selectedCards.length > 0 && selectedCards.filter(x => x.isMoving).length === 0;
+  })(),
   webSocketDisconnected: state.room.connection.webSocketDisconnected,
 });
 
