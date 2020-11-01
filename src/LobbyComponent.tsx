@@ -74,7 +74,8 @@ export class LobbyComponent extends React.Component<Props, State> {
 
   private async showSampleRoomNames() {
     while (true) {
-      let sampleName = words.sort(() => Math.random() - 0.5).slice(0, 4).join('-');
+      const numberOfWordsInSampleName = 3;
+      let sampleName = words.sort(() => Math.random() - 0.5).slice(0, numberOfWordsInSampleName).join('-');
       this.setState({placeholder: "", fullPlaceholder: sampleName });
       await sleep(300);
       for (let i = 1; i <= sampleName.length; i++) {
