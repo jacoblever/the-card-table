@@ -80,7 +80,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   let connections = await getConnections(roomId);
 
   if(action.type === BACKEND_GET_INITIAL_STATE) {
-    let players = await getPlayers(roomId);
     let me = (await getConnection(senderConnectionId)).playerId;
     let cardState: BackendCardState = {
       cardsById: {},

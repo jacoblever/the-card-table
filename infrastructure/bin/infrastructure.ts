@@ -5,6 +5,8 @@ import { InfrastructureStack } from '../lib/infrastructure-stack';
 
 const app = new cdk.App();
 
+const HOUR = 60 * 60;
+
 const jacobleverComCloudFrontCertArn =
   "arn:aws:acm:us-east-1:350413574090:certificate/0323ffad-0ce6-47b5-8d5e-f6e56f16e425";
 const stackEnv = {
@@ -20,6 +22,7 @@ new InfrastructureStack(
     frontendCustomDomain: "cards.jacoblever.com",
     customDomainCertificateArn: jacobleverComCloudFrontCertArn,
     frontendEnvironment: "production",
+    roomTimeToLive: 24 * HOUR,
   },
 );
 
@@ -31,5 +34,6 @@ new InfrastructureStack(
     frontendCustomDomain: "cards-staging.jacoblever.com",
     customDomainCertificateArn: jacobleverComCloudFrontCertArn,
     frontendEnvironment: "staging",
+    roomTimeToLive: HOUR / 2,
   },
 );

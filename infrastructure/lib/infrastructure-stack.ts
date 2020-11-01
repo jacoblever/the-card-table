@@ -18,6 +18,7 @@ type CardRoomParams = {
   frontendCustomDomain: string,
   customDomainCertificateArn: string,
   frontendEnvironment: "production" | "staging",
+  roomTimeToLive: number,
 }
 
 export class InfrastructureStack extends cdk.Stack {
@@ -129,6 +130,7 @@ export class InfrastructureStack extends cdk.Stack {
       f.addEnvironment("TABLE_NAME_PLAYERS", playersTable.tableName);
       f.addEnvironment("TABLE_NAME_CONNECTIONS", connectionsTable.tableName);
       f.addEnvironment("TABLE_NAME_CARDS", cardsTable.tableName);
+      f.addEnvironment("ROOM_TIME_TO_LIVE", `${params.roomTimeToLive}`);
       f.addToRolePolicy(new PolicyStatement({
         effect: Effect.ALLOW,
         actions: ["execute-api:ManageConnections"],

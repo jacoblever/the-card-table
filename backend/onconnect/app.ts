@@ -14,8 +14,8 @@ import {
 import { pushToConnections } from "../common/pushMessage";
 import { playerNames } from "./playerNames";
 import { backendPlayersUpdate } from "../common/backend_actions";
-
-const _24_HOURS = 24 * 60 * 60;
+import { getLambdaEnv } from "../common/env";
+import { now } from "../common/time";
 
 let uuidv4 = () => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -77,7 +77,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       playerId: playerId,
       name: name,
       playOrder: existingPlayers.length,
-      timeToLive: Math.floor((new Date()).getTime() / 1000) + _24_HOURS
+      timeToLive: now() + getLambdaEnv().RoomTimeToLive
     };
     await putPlayer(newPlayer);
     players = [...existingPlayers, newPlayer];
@@ -87,7 +87,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     await updatePlayerTimeToLive({
       roomId: roomId,
       playerId: playerId,
-      timeToLive: Math.floor((new Date()).getTime() / 1000) + _24_HOURS,
+      timeToLive: now() + getLambdaEnv().RoomTimeToLive,
     });
   }
 

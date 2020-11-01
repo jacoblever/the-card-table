@@ -1,7 +1,7 @@
 import { getLambdaEnv } from "./env";
 import { DynamoDB } from 'aws-sdk';
 import { DocumentClient } from "aws-sdk/lib/dynamodb/document_client";
-import { Key } from "aws-sdk/clients/dynamodb";
+import { now } from "./time";
 
 const ddb = new DynamoDB.DocumentClient({ apiVersion: '2012-08-10', region: process.env.AWS_REGION });
 
@@ -36,10 +36,15 @@ export type DbCard = {
   zIndex: number;
 };
 
+let addTimestamps = (x: {}) => {
+  let at = now();
+  return {...x, createdAt: at, modifiedAt: at};
+}
+
 export const putPlayer = async (player: DbPlayer) => {
   await ddb.put({
     TableName: getLambdaEnv().PlayersTableName,
-    Item: player,
+    Item: addTimestamps(player),
   }).promise();
 };
 
@@ -72,7 +77,7 @@ export const getPlayers = async (roomId: string) => {
 export const putConnection = async (connection: DbConnection) => {
   await ddb.put({
     TableName: getLambdaEnv().ConnectionsTableName,
-    Item: connection,
+    Item: addTimestamps(connection),
   }).promise();
 };
 
@@ -144,9 +149,10 @@ export const markConnectionReadyForActions = async (connectionReadyForActions: C
       roomId: connectionReadyForActions.roomId,
       connectionId: connectionReadyForActions.connectionId,
     },
-    UpdateExpression: 'set readyForActions = :true',
+    UpdateExpression: 'set readyForActions = :true, modifiedAt = :modifiedAt',
     ExpressionAttributeValues: {
       ':true': true,
+      ':modifiedAt': now(),
     },
   }).promise();
 };
@@ -179,16 +185,18 @@ export const getCards = async (roomId: string) => {
 };
 
 export const putCards = async (cards: DbCard[]) => {
+  console.log(`Asked to create ${cards.length} cards`);
   let cardsTableName = getLambdaEnv().CardsTableName;
   await inBatchesOf25(cards, async batch => {
     let requestItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap = {};
     requestItems[cardsTableName] = batch.map(card => {
       return {
         PutRequest: {
-          Item: card,
+          Item: addTimestamps(card),
         },
       }
     });
+    console.log(`About to write ${requestItems[cardsTableName].length} cards`);
     await ddb.batchWrite({
       RequestItems: requestItems,
     }).promise();
@@ -211,7 +219,7 @@ export const storeCardDrop = async (cardDrop: CardDrop) => {
       roomId: cardDrop.roomId,
       cardId: cardDrop.cardId,
     },
-    UpdateExpression: 'set #l = :newLocation, zIndex = :newZIndex, heldBy = :newHeldBy',
+    UpdateExpression: 'set #l = :newLocation, zIndex = :newZIndex, heldBy = :newHeldBy, modifiedAt = :modifiedAt',
     ExpressionAttributeNames: {
       '#l': 'location',
     },
@@ -219,6 +227,7 @@ export const storeCardDrop = async (cardDrop: CardDrop) => {
       ':newHeldBy': cardDrop.newHeldBy,
       ':newLocation': cardDrop.newLocation,
       ':newZIndex': cardDrop.newZIndex,
+      ':modifiedAt': now(),
     },
   };
   if(cardDrop.turnOver) {
@@ -241,12 +250,13 @@ export const renamePlayer = async (renamePlayer: RenamePlayer) => {
       roomId: renamePlayer.roomId,
       playerId: renamePlayer.playerId,
     },
-    UpdateExpression: 'set #n = :newName',
+    UpdateExpression: 'set #n = :newName, modifiedAt = :modifiedAt',
     ExpressionAttributeNames: {
       '#n': 'name'
     },
     ExpressionAttributeValues: {
       ':newName': renamePlayer.name,
+      ':modifiedAt': now(),
     }
   }).promise();
 };
@@ -264,9 +274,10 @@ export const updatePlayerTimeToLive = async (updatePlayerTimeToLive: UpdatePlaye
       roomId: updatePlayerTimeToLive.roomId,
       playerId: updatePlayerTimeToLive.playerId,
     },
-    UpdateExpression: 'set timeToLive = :newTimeToLive',
+    UpdateExpression: 'set timeToLive = :newTimeToLive, modifiedAt = :modifiedAt',
     ExpressionAttributeValues: {
       ':newTimeToLive': updatePlayerTimeToLive.timeToLive,
+      ':modifiedAt': now(),
     }
   }).promise();
 };
@@ -286,16 +297,16 @@ async function inBatchesOf25<T>(array: T[], callback: (batch: T[]) => Promise<vo
   for (let i = 0; i < array.length; i++) {
     batch.push(array[i]);
     if(batch.length === 25) {
-      await callback(batch);
+      await callback([...batch]);
       batch = [];
     }
   }
   if(batch.length > 0) {
-    await callback(batch);
+    await callback([...batch]);
   }
 }
 
-async function deleteAll<T>(getter: () => Promise<T[]>, tableName: string, keyGetter: (item: T) => Key) {
+async function deleteAll<T>(getter: () => Promise<T[]>, tableName: string, keyGetter: (item: T) => {}) {
   let items = await getter();
   await inBatchesOf25(items, async (batch: T[]) => {
     let requestItems: DynamoDB.DocumentClient.BatchWriteItemRequestMap = {};
@@ -317,22 +328,22 @@ export const deleteRoom = async (roomId: string) => {
 
   await deleteAll(() => getCards(roomId), lambdaEnv.CardsTableName, x => {
     return {
-      roomId: {S: roomId},
-      cardId: {S: x.cardId},
+      roomId: roomId,
+      cardId: x.cardId,
     };
   });
 
   await deleteAll(() => getPlayers(roomId), lambdaEnv.PlayersTableName, x => {
     return {
-      roomId: {S: roomId},
-      playerId: {S: x.playerId},
+      roomId: roomId,
+      playerId: x.playerId,
     };
   });
 
   await deleteAll(() => getConnections(roomId), lambdaEnv.ConnectionsTableName, x => {
     return {
-      roomId: {S: roomId},
-      connectionId: {S: x.connectionId},
+      roomId: roomId,
+      connectionId: x.connectionId,
     };
   });
 };

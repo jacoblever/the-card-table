@@ -9,6 +9,7 @@ test('Empty Stack', () => {
       customDomainCertificateArn: "test",
       frontendCustomDomain: "test.example.com",
       frontendEnvironment: "staging",
+      roomTimeToLive: 1,
     });
     // THEN
     expectCDK(stack).to(matchTemplate({
