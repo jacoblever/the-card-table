@@ -178,7 +178,6 @@ async function shuffleCards(dispatch: AppThunkDispatch, cards: Card[]) {
 export function shuffleSelectedCards(): AppThunkAction<void, null> {
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
     let cards = getCardsGroup(getState().room.cardsById);
-    await dispatch(deselectAllCards());
     await shuffleCards(dispatch, cards);
   }
 }
@@ -204,7 +203,6 @@ async function tidyCards(dispatch: AppThunkDispatch, cards: Card[]) {
 export function tidySelectedCards(): AppThunkAction<void, null> {
   return async (dispatch: AppThunkDispatch, getState: () => AppState) => {
     let cards = getCardsGroup(getState().room.cardsById);
-    await dispatch(deselectAllCards());
     await tidyCards(dispatch, cards);
   }
 }
