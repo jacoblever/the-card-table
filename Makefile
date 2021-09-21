@@ -2,6 +2,11 @@
 install:
 	npm install
 	cd ./infrastructure && npm install
+	cd ./backend/common && npm install
+	cd ./backend/onconnect && npm install
+	cd ./backend/ondisconnect && npm install
+	cd ./backend/sendmessage && npm install
+	cd ./backend/onplayerttl && npm install
 
 .PHONY: start
 start:
