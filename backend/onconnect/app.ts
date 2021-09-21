@@ -12,6 +12,7 @@ import {
   updatePlayerTimeToLive
 } from "../common/database";
 import { pushToConnections } from "../common/pushMessage";
+import { INITIAL_PACK_LOCATION } from "../common/constants";
 import { playerNames } from "./playerNames";
 import { backendPlayersUpdate } from "../common/backend_actions";
 import { getLambdaEnv } from "../common/env";
@@ -44,8 +45,8 @@ let getInitialCards = (roomId: string) => {
       number: x.number,
       heldBy: null,
       location: [
-        200 + tidyOffset * i - 52 * tidyOffset / 2,
-        150 - tidyOffset * i + 52 * tidyOffset / 2
+        INITIAL_PACK_LOCATION[0] + tidyOffset * i - 52 * tidyOffset / 2,
+        INITIAL_PACK_LOCATION[1] - tidyOffset * i + 52 * tidyOffset / 2
       ],
       zIndex: i,
     }

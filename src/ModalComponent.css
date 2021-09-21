@@ -13,10 +13,15 @@
 .modal-content {
   background-color: #fefefe;
   margin: 15% auto;
-  padding: 20px;
+  padding: 20px 20px 30px;
   border: 1px solid #888;
   width: 80%;
   max-width: 400px;
+}
+
+.modal-content h2 {
+  line-height: 0;
+  margin-bottom: 1.5em;
 }
 
 .modal-close {
