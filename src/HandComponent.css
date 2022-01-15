@@ -1,13 +1,27 @@
 .hand-container {
-    height: 200px;
+    height: 150px;
     width: 100%;
     position: absolute;
     bottom: 0;
     margin: 2px 0;
 }
 
+.hand-container__tools {
+    position: absolute;
+    bottom: 0;
+}
+
 .hand-container__name {
     position: absolute;
+}
+
+.hand-container__name-label {
+    font-style: italic;
+    font-size: 0.8em;
+}
+
+.hand-container__buttons {
+    float: right;
 }
 
 .hand {

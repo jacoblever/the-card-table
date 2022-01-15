@@ -5,20 +5,29 @@ import '@interactjs/types'
 import Cookies from "js-cookie";
 
 import './HandComponent.css';
-import EditIcon from './icons/EditIcon.svg'
+import EditIcon from './icons/EditIcon.svg';
+import ArrangeIcon from './icons/ArrangeIcon.svg';
+import ViewIcon from './icons/ViewIcon.svg';
+import RefreshIcon from './icons/RefreshIcon.svg';
 import { Card, Player } from "./store/state";
 import { CardContainer } from "./CardContainer";
+import { ModalComponent } from "./ModalComponent";
 
 type Props = {
   player: Player,
   cards: Card[],
 
-  changeName: (name: string) => {};
+  changeName: (name: string) => {},
+  arrangeHand: (handWidth: number) => void,
+  faceUpHand: () => void,
+  regatherAllCards: () => void,
 }
 
 type State = {
   editMode: boolean,
   editedName: string,
+
+  regatherModalOpen: boolean,
 }
 
 export class HandComponent extends React.Component<Props, State> {
@@ -29,6 +38,8 @@ export class HandComponent extends React.Component<Props, State> {
     this.state = {
       editMode: false,
       editedName: this.props.player?.name,
+
+      regatherModalOpen: false,
     }
   }
 
@@ -92,6 +103,7 @@ export class HandComponent extends React.Component<Props, State> {
     if(!this.props.player) {
       return <span className={className}/>
     }
+    let title = <span className="hand-container__name-label">Your nickname:&nbsp;</span>;
     if(this.state.editMode) {
       let onKeyUp = (event: KeyboardEvent<HTMLInputElement>) => {
         if(event.keyCode === 13) { // enter
@@ -99,6 +111,7 @@ export class HandComponent extends React.Component<Props, State> {
         }
       };
       return <span className={className}>
+        {title}
         <input
           type="text"
           value={this.state.editedName}
@@ -114,14 +127,71 @@ export class HandComponent extends React.Component<Props, State> {
       editedName: this.props.player.name,
     });
     return <span className={className}>
+      {title}
       {this.props.player.name}
-      <img src={EditIcon} width="15px" onClick={startEditMode} alt="Edit"/>
+      &nbsp;
+      <img src={EditIcon} width="15px" onClick={startEditMode} alt="Edit" title="Edit Nickname"/>
     </span>
+  }
+
+  private getHandWidth(): number {
+    const rect = this.domElement.current!.getBoundingClientRect();
+    return rect.width;
+  }
+
+  private renderButtons(): JSX.Element {
+    let className = "hand-container__buttons";
+    return <span className={className}>
+      <img
+        src={ArrangeIcon}
+        width="37px"
+        onClick={() => this.props.arrangeHand(this.getHandWidth())}
+        alt="Arrange"
+        title="Arrange your hand"
+      />
+      <img
+        src={ViewIcon}
+        width="37px"
+        onClick={() => this.props.faceUpHand()}
+        alt="View"
+        title="View your cards (privately)"
+      />
+    </span>;
+  }
+
+  private renderTools() {
+    let close = () => this.setState({regatherModalOpen: false});
+    let confirm = () => {
+      close();
+      this.props.regatherAllCards();
+    };
+    return <div className="hand-container__tools">
+      <img
+        src={RefreshIcon}
+        width="25px"
+        onClick={() => this.setState({regatherModalOpen: true})}
+        alt="Gather the cards together for a new game"
+        title="Gather the cards together for a new game"
+      />
+      {this.state.regatherModalOpen && (<ModalComponent closable={true} onClose={close} onEnterClick={confirm}>
+        <h2>Gather all cards</h2>
+        <p>Gather all the cards together (from everyone's hands) back on the table for a new game</p>
+        <p><i>(This cannot be undone and will ruin the current game!)</i></p>
+
+        <button onClick={close}>
+          Cancel
+        </button>
+        <button onClick={confirm}>
+          OK
+        </button>
+      </ModalComponent>)}
+    </div>;
   }
 
   render() {
     return (
       <div className="hand-container">
+        {this.renderTools()}
         <div id={this.props.player?.id} className="hand" ref={this.domElement}>
           {this.props.cards.map(card =>
             <CardContainer
@@ -131,6 +201,7 @@ export class HandComponent extends React.Component<Props, State> {
             />
           )}
           {this.renderName()}
+          {this.renderButtons()}
         </div>
       </div>
     );

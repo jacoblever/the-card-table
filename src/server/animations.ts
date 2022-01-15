@@ -4,6 +4,7 @@ import { LocationTransformer } from "../geometry/locationTransformer";
 import { Elementwise } from "../geometry/elementwise";
 import { Dispatch } from "redux";
 import { DropCardsAction, moveCards, pickUpCards } from "../store/actions/card_actions";
+import {FIRST_CARD_LOCATION_IN_OWN_HAND} from "../constants";
 
 let getEndLocationInFinalOwnersFrame = (card: Card, endLocation: Coordinates, nowHeldBy: CardOwner, me: string) => {
   if (nowHeldBy === CardOwnerTable) {
@@ -13,7 +14,7 @@ let getEndLocationInFinalOwnersFrame = (card: Card, endLocation: Coordinates, no
     return endLocation;
   }
   if (nowHeldBy === me && card.heldBy !== me) {
-    return [150, 10] as Coordinates;
+    return FIRST_CARD_LOCATION_IN_OWN_HAND as Coordinates;
   }
   return [0, 0] as Coordinates;
 }

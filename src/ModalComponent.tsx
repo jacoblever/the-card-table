@@ -5,6 +5,7 @@ import './ModalComponent.css';
 export type Props = {
   closable: boolean
   onClose?: () => void,
+  onEnterClick?: () => void,
 }
 
 export class ModalComponent extends React.Component<Props, {}> {
@@ -43,6 +44,11 @@ export class ModalComponent extends React.Component<Props, {}> {
     let escapeKeyCode = 27;
     if(event.keyCode === escapeKeyCode && this.props.onClose) {
       this.props.onClose();
+    }
+
+    let enterKeyCode = 13;
+    if(event.keyCode === enterKeyCode && this.props.onEnterClick) {
+      this.props.onEnterClick();
     }
   }
 

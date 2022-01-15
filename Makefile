@@ -1,3 +1,12 @@
+.PHONY: install
+install:
+	npm install
+	cd ./infrastructure && npm install
+
+.PHONY: start
+start:
+	npm start
+
 .PHONY: build
 build:
 	# Build cdk infrastructure project...
