@@ -31,14 +31,14 @@ build:
 
 .PHONY: deploy-prod
 deploy-prod: build
-	cd ./infrastructure && cdk deploy TheCardRoomInfrastructure
+	cd ./infrastructure && AWS_DEFAULT_REGION=eu-west-1 cdk deploy TheCardRoomInfrastructure
 	#rm -rf ./backend/*/build/
 
 .PHONY: deploy-staging
 deploy-staging: build
-	cd ./infrastructure && cdk deploy TheCardRoomInfrastructureStaging
+	cd ./infrastructure && AWS_DEFAULT_REGION=eu-west-1 cdk deploy TheCardRoomInfrastructureStaging
 	#rm -rf ./backend/*/build/
 
 .PHONY: deploy-all
 deploy-all: build
-	cd ./infrastructure && cdk deploy TheCardRoomInfrastructure TheCardRoomInfrastructureStaging
+	cd ./infrastructure && AWS_DEFAULT_REGION=eu-west-1 cdk deploy TheCardRoomInfrastructure TheCardRoomInfrastructureStaging

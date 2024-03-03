@@ -37,6 +37,24 @@ Instead, it will copy all the configuration files and the transitive dependencie
 
 You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
+# Deloying
+
+Install the aws-cli and ensure you are logged into to the aws account. 
+
+Install aws-cdk
+```
+npm install -g aws-cdk
+```
+
+If running make deploy-staging gives you the direction to run a command like:
+```
+cdk bootstrap aws://<aws account id>/<aws region>
+```
+
+ensure the region is correct (you should only need to run this once per region per AWS account).
+
+
+
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
